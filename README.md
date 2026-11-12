@@ -59,14 +59,14 @@ Booking requests are sent only to a Google Apps Script web app. The spreadsheet 
 2. Create a standalone Google Apps Script project and copy `google-apps-script/Code.gs` into its `Code.gs` file.
 3. In Apps Script **Project Settings → Script properties**, add `SPREADSHEET_ID` with the ID from the Sheet URL. Do not put this ID in frontend environment variables or source code.
 4. Deploy the script as a web app that **executes as the owner** and accepts requests from **Anyone**. This is necessary for visitors who are not signed into the owner’s Google account. The public endpoint is write-only, validates the booking and price, and does not expose a sheet-reading route. Keep the spreadsheet’s own sharing settings restricted to the owner.
-5. Copy the deployed web app URL (the `https://script.google.com/macros/s/.../exec` URL) to a local `.env` file:
+5. Copy the deployed web app URL (the `https://script.google.com/macros/s/.../exec` URL) to a local `.env` file for local testing:
 
    ```dotenv
    VITE_GOOGLE_APPS_SCRIPT_URL=https://script.google.com/macros/s/REPLACE_WITH_DEPLOYMENT_ID/exec
    ```
 
-   `.env.example` is a template. Never put Google account credentials, an API key, or the spreadsheet ID in a `VITE_` variable.
-6. Restart Vite after changing `.env`. For production, set the same endpoint variable in the hosting provider’s build environment and rebuild.
+   `.env.example` is a template. Never put Google account credentials, an API key, or the spreadsheet ID in a `VITE_` variable. The web app URL is public and is embedded in the built website.
+6. Restart Vite after changing `.env`. The GitHub Pages workflow sets the production endpoint in its build environment; update that value in `.github/workflows/deploy.yml` if the Apps Script deployment URL changes.
 7. Submit a test request, confirm it appears in the private `Bookings` tab, then remove the test row.
 
 If you already deployed the earlier version of this Apps Script, update the script and deploy a new version. The booking columns now include package type, included stages, total duration, and the selected technical duration. Preserve any existing booking rows; if the current tab has the older columns, back it up and configure `SHEET_NAME` to use a new tab before accepting new requests.
@@ -84,4 +84,4 @@ If the endpoint is absent or misconfigured, the site does **not** show a success
 
 ## Deployment
 
-Run `npm run build` and deploy the generated `dist/` folder to any static host that supports single-page applications. Set `VITE_GOOGLE_APPS_SCRIPT_URL` in the host’s build environment before building. The Apps Script web app must be deployed separately.
+Run `npm run build` and deploy the generated `dist/` folder to any static host that supports single-page applications. Set `VITE_GOOGLE_APPS_SCRIPT_URL` in the host’s build environment before building. For GitHub Pages, the deployed Apps Script URL is configured in `.github/workflows/deploy.yml`. The Apps Script web app must be deployed separately.
