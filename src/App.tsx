@@ -435,6 +435,10 @@ function App() {
               Get comfortable answering questions with a relaxed, one-on-one mock interview.
               Practice out loud, get useful feedback, and show up more prepared.
             </p>
+            <div className="hero-price-callout">
+              <strong>Packages start at ₱100</strong>
+              <span>Choose your package to see its complete price.</span>
+            </div>
             <div className="hero-actions">
               <button className="button button-primary" type="button" onClick={() => startBooking()}>
                 Book a mock interview <span aria-hidden="true">→</span>
