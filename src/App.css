@@ -349,3 +349,139 @@ h1, h2, h3, p { margin-top: 0; }
   .art-price { bottom: 25px; }
   .stage-options { gap: 6px; }
 }
+
+/* Keep supporting text comfortably readable without overpowering headings. */
+.site-header nav a,
+.hero-lede,
+.how-card p,
+.meeting-note,
+.pricing-intro > p,
+.price-rule p,
+.booking-aside > p,
+.booking-aside-note p,
+.wizard-title p,
+.field-hint,
+.field-error,
+.included-line,
+.price-explanation,
+.privacy-card p,
+.consent-label,
+.ai-disclosure p,
+.review-package small,
+.summary-row span,
+.summary-row b,
+.request-warning p,
+.submit-error,
+.confirmation > p,
+.confirmation-summary span,
+.confirmation-summary b,
+.bottom-note p,
+.footer-inner > span,
+.footer-legal {
+  font-size: 14px;
+}
+
+.field > label,
+.stage-picker legend,
+.field input,
+.field select,
+.field textarea,
+.stage-option-top b,
+.stage-option-top > span,
+.wizard-actions .button,
+.back-button {
+  font-size: 15px;
+}
+
+.hero-reassurance,
+.trust-inner span,
+.eyebrow,
+.step-kicker,
+.wizard-topline,
+.wizard-step-names,
+.preview-heading .eyebrow,
+.preview-select-label,
+.stage-price-name b,
+.stage-amount,
+.review-label,
+.mini-price-card > span {
+  font-size: 13px;
+}
+
+.stage-price-name small,
+.stage-amount small,
+.stage-option small,
+.duration-box small,
+.stage-index,
+.preview-foot,
+.step-number,
+.art-card-top,
+.art-card-top > span:last-child,
+.art-note b,
+.art-note small,
+.art-card-foot,
+.art-price small,
+.wizard-privacy-foot,
+.package-total span {
+  font-size: 12px;
+}
+
+.field-hint,
+.field-error {
+  line-height: 1.5;
+}
+
+@media (max-width: 680px) {
+  .site-header nav a,
+  .hero-lede,
+  .how-card p,
+  .meeting-note,
+  .pricing-intro > p,
+  .price-rule p,
+  .booking-aside > p,
+  .booking-aside-note p,
+  .wizard-title p,
+  .field-hint,
+  .field-error,
+  .included-line,
+  .price-explanation,
+  .privacy-card p,
+  .consent-label,
+  .ai-disclosure p,
+  .review-package small,
+  .summary-row span,
+  .summary-row b,
+  .request-warning p,
+  .submit-error,
+  .confirmation > p,
+  .confirmation-summary span,
+  .confirmation-summary b,
+  .bottom-note p,
+  .footer-inner > span {
+    font-size: 14px;
+  }
+
+  .field > label,
+  .stage-picker legend,
+  .stage-option-top b,
+  .stage-option-top > span {
+    font-size: 14px;
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    font-size: 16px;
+  }
+
+  .footer-legal {
+    font-size: 11px;
+  }
+
+  .stage-price-name b,
+  .stage-amount,
+  .trust-inner span,
+  .hero-reassurance {
+    font-size: 12px;
+  }
+}
