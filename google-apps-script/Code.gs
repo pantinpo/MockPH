@@ -1,25 +1,29 @@
 const SHEET_NAME = 'Bookings';
 const RESULT_TYPE = 'mockcall-booking-result';
 const CATEGORIES = {
-  'call-center-bpo': { name: 'Call Center / BPO', basePrice: 100 },
-  'admin-executive-assistant': { name: 'Admin / Executive Assistant', basePrice: 125 },
-  'hr-recruitment': { name: 'HR / Recruitment', basePrice: 150 },
-  'general-qa': { name: 'General QA', basePrice: 150 },
-  'finance-accounting': { name: 'Finance / Accounting', basePrice: 175 },
-  'workforce-management': { name: 'Workforce Management', basePrice: 200 },
-  'reporting-data-analyst': { name: 'Reporting / Data Analyst', basePrice: 225 },
-  'business-intelligence-power-bi': { name: 'Business Intelligence / Power BI', basePrice: 250 },
-  'team-lead-supervisor': { name: 'Team Lead / Supervisor', basePrice: 250 },
-  'software-qa-automation': { name: 'Software QA / Automation', basePrice: 275 },
-  'programming-development': { name: 'Programming / Development', basePrice: 300 },
-  'operations-manager': { name: 'Operations Manager', basePrice: 300 },
-  'senior-management': { name: 'Senior Management', basePrice: 400 },
+  'call-center-bpo': 'Call Center / BPO',
+  'admin-executive-assistant': 'Admin / Executive Assistant',
+  'hr-recruitment': 'HR / Recruitment',
+  'general-qa': 'General QA',
+  'finance-accounting': 'Finance / Accounting',
+  'workforce-management': 'Workforce Management',
+  'reporting-data-analyst': 'Reporting / Data Analyst',
+  'business-intelligence-power-bi': 'Business Intelligence / Power BI',
+  'team-lead-supervisor': 'Team Lead / Supervisor',
+  'software-qa-automation': 'Software QA / Automation',
+  'programming-development': 'Programming / Development',
+  'operations-manager': 'Operations Manager',
+  'senior-management': 'Senior Management',
 };
 const STAGES = {
-  screening: { name: 'Initial Screening', multiplier: 1, fixedPrice: 100 },
-  hiringManager: { name: 'Hiring Manager', multiplier: 1.25 },
-  technical: { name: 'Technical Interview', multiplier: 1.5 },
-  final: { name: 'Final Interview', multiplier: 2 },
+  screening: { name: 'Initial Screening', duration: 15, price: 100 },
+  hiringManager: { name: 'Hiring Manager Interview', duration: 30, price: 150 },
+  technical: { name: 'Technical Interview', durations: [30, 45], prices: { 30: 200, 45: 220 } },
+  final: { name: 'Final Interview', duration: 45, price: 250 },
+};
+const BUNDLES = {
+  corporate: { name: 'Corporate Track', stages: ['screening', 'hiringManager'], price: 220 },
+  executive: { name: 'Executive Track', stages: ['screening', 'hiringManager', 'technical', 'final'], price: 500 },
 };
 const HEADERS = [
   'Request ID',
@@ -31,8 +35,11 @@ const HEADERS = [
   'Company / Industry',
   'Experience Level',
   'Job Category',
-  'Interview Stage',
+  'Package Type',
+  'Package',
+  'Interview Stages',
   'Duration (minutes)',
+  'Technical Stage Duration (minutes)',
   'Package Price (PHP)',
   'Preferred Date',
   'Preferred Time',
@@ -56,13 +63,11 @@ function doPost(event) {
       throw new Error('Invalid request.');
     }
 
-    const category = CATEGORIES[booking.jobCategory];
-    const stage = STAGES[booking.interviewStage];
-    const expectedPrice = booking.interviewStage === 'screening'
-      ? stage.fixedPrice
-      : Math.round(category.basePrice * stage.multiplier * 100) / 100;
-    if (Number(booking.packagePrice) !== expectedPrice) {
-      throw new Error('Package price did not match the configured price.');
+    const selection = resolvePackage_(booking);
+    if (Number(booking.packagePrice) !== selection.price ||
+        Number(booking.durationMinutes) !== selection.duration ||
+        Number(booking.packageDurationMinutes) !== selection.duration) {
+      throw new Error('Package price or duration did not match the configured selection.');
     }
 
     const lock = LockService.getScriptLock();
@@ -88,10 +93,15 @@ function doPost(event) {
         safeCell_(booking.targetRole),
         safeCell_(booking.companyOrIndustry),
         safeCell_(booking.experienceLevel),
-        category.name,
-        stage.name,
-        30,
-        expectedPrice,
+        CATEGORIES[booking.jobCategory],
+        booking.packageType === 'single' ? 'Single stage' : 'Bundle',
+        selection.name,
+        selection.stages.map(function (stage) { return stage.name; }).join(', '),
+        selection.duration,
+        booking.packageType === 'single' && booking.interviewStage === 'technical'
+          ? booking.durationMinutes
+          : selection.includesTechnical ? booking.technicalDurationMinutes : '',
+        selection.price,
         safeCell_(booking.preferredDate),
         safeCell_(booking.preferredTime),
         'Asia/Manila',
@@ -107,6 +117,44 @@ function doPost(event) {
     console.error(error && error.message ? error.message : 'Booking request could not be saved.');
   }
   return response_(success);
+}
+
+function resolvePackage_(booking) {
+  if (booking.packageType === 'single') {
+    const stage = STAGES[booking.interviewStage];
+    if (!stage) throw new Error('Unknown interview stage.');
+    const duration = Number(booking.durationMinutes);
+    const price = booking.interviewStage === 'technical'
+      ? stage.prices[duration]
+      : stage.duration === duration ? stage.price : null;
+    if (!price) throw new Error('Stage duration or price is invalid.');
+    return {
+      name: stage.name,
+      stages: [stage],
+      duration: duration,
+      price: price,
+      includesTechnical: booking.interviewStage === 'technical',
+    };
+  }
+
+  if (booking.packageType === 'bundle') {
+    const bundle = BUNDLES[booking.bundleId];
+    if (!bundle) throw new Error('Unknown package bundle.');
+    const selectedStages = bundle.stages.map(function (stageId) { return STAGES[stageId]; });
+    const includesTechnical = bundle.stages.indexOf('technical') !== -1;
+    const duration = selectedStages.reduce(function (total, stage, index) {
+      if (bundle.stages[index] === 'technical') return total + Number(booking.technicalDurationMinutes);
+      return total + stage.duration;
+    }, 0);
+    return {
+      name: bundle.name,
+      stages: selectedStages,
+      duration: duration,
+      price: bundle.price,
+      includesTechnical: includesTechnical,
+    };
+  }
+  throw new Error('Unknown package type.');
 }
 
 function validateBooking_(booking) {
@@ -132,11 +180,24 @@ function validateBooking_(booking) {
   if (booking.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(booking.email.trim())) {
     throw new Error('Invalid email address.');
   }
-  if (!CATEGORIES[booking.jobCategory] || !STAGES[booking.interviewStage]) {
+  if (!Object.prototype.hasOwnProperty.call(CATEGORIES, booking.jobCategory) ||
+      !['single', 'bundle'].includes(booking.packageType)) {
     throw new Error('Unknown package selection.');
   }
-  if (booking.durationMinutes !== 30 || booking.timezone !== 'Asia/Manila') {
-    throw new Error('Unsupported duration or timezone.');
+  if (booking.packageType === 'single' &&
+      !Object.prototype.hasOwnProperty.call(STAGES, booking.interviewStage)) {
+    throw new Error('Choose an interview stage.');
+  }
+  if (booking.packageType === 'bundle' &&
+      !Object.prototype.hasOwnProperty.call(BUNDLES, booking.bundleId)) {
+    throw new Error('Choose a package bundle.');
+  }
+  if (booking.packageType === 'bundle' && BUNDLES[booking.bundleId].stages.indexOf('technical') !== -1 &&
+      ![30, 45].includes(Number(booking.technicalDurationMinutes))) {
+    throw new Error('Choose a Technical Interview length for the bundle.');
+  }
+  if (booking.timezone !== 'Asia/Manila') {
+    throw new Error('Unsupported timezone.');
   }
   if (booking.privacyNoticeAccepted !== true) {
     throw new Error('Privacy notice acceptance is required.');

@@ -1,7 +1,16 @@
 import { useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
-import { businessConfig, getPackagePrice, formatPrice } from './config'
-import type { Booking, InterviewStage } from './config'
+import {
+  businessConfig,
+  getBundleSavings,
+  formatPrice,
+  getPackageDurationMinutes,
+  getPackageName,
+  getPackagePrice,
+  getPackageStageNames,
+  getStagePrice,
+} from './config'
+import type { Booking, InterviewBundle, InterviewStage } from './config'
 import { submitBookingRequest } from './submission'
 import './App.css'
 
@@ -13,14 +22,229 @@ const initialBooking: Booking = {
   companyOrIndustry: '',
   experienceLevel: '',
   jobCategory: '',
+  packageType: '',
   interviewStage: '',
-  durationMinutes: 30,
+  bundleId: '',
+  durationMinutes: 0,
+  technicalDurationMinutes: 30,
   preferredDate: '',
   preferredTime: '',
   timezone: 'Asia/Manila',
   notes: '',
   privacyNoticeAccepted: false,
   honeypot: '',
+}
+
+function PackageSelector({
+  booking,
+  errors,
+  onChange,
+  idPrefix,
+}: {
+  booking: Booking
+  errors: Partial<Record<keyof Booking, string>>
+  onChange: <Key extends keyof Booking>(key: Key, value: Booking[Key]) => void
+  idPrefix: string
+}) {
+  const packagePrice = getPackagePrice(booking)
+  const hasSelection = Boolean(
+    booking.jobCategory &&
+    ((booking.packageType === 'single' && booking.interviewStage) ||
+      (booking.packageType === 'bundle' && booking.bundleId)),
+  )
+
+  function chooseStage(stageId: InterviewStage) {
+    const stage = businessConfig.stages.find((item) => item.id === stageId)
+    if (!stage) return
+    onChange('packageType', 'single')
+    onChange('interviewStage', stageId)
+    onChange('bundleId', '')
+    onChange('durationMinutes', stage.defaultDuration)
+  }
+
+  function chooseBundle(bundleId: InterviewBundle) {
+    onChange('packageType', 'bundle')
+    onChange('interviewStage', '')
+    onChange('bundleId', bundleId)
+  }
+
+  function chooseTechnicalDuration(duration: 30 | 45) {
+    if (booking.packageType === 'single') onChange('durationMinutes', duration)
+    else onChange('technicalDurationMinutes', duration)
+  }
+
+  const selectedBundle = businessConfig.bundles.find((bundle) => bundle.id === booking.bundleId)
+  const includesTechnical = selectedBundle?.id === 'executive'
+
+  return (
+    <div className="package-selector">
+      <Field
+        id={`${idPrefix}-jobCategory`}
+        label="Job category"
+        error={errors.jobCategory}
+        hint="Used to tailor your practice questions. It does not change the package price."
+      >
+        <select
+          id={`${idPrefix}-jobCategory`}
+          value={booking.jobCategory}
+          onChange={(event) => onChange('jobCategory', event.target.value)}
+          aria-invalid={Boolean(errors.jobCategory)}
+          aria-describedby={errors.jobCategory ? `${idPrefix}-jobCategory-error` : undefined}
+        >
+          <option value="">Select a category</option>
+          {businessConfig.categories.map((category) => (
+            <option key={category.id} value={category.id}>{category.name}</option>
+          ))}
+        </select>
+      </Field>
+
+      <fieldset className="package-type-picker">
+        <legend>What would you like to practice?</legend>
+        <div className="package-type-options">
+          <label className={`package-type-option ${booking.packageType === 'single' ? 'selected' : ''}`}>
+            <input
+              type="radio"
+              name={`${idPrefix}-packageType`}
+              value="single"
+              checked={booking.packageType === 'single'}
+              onChange={() => {
+                onChange('packageType', 'single')
+                onChange('bundleId', '')
+              }}
+            />
+            <b>One interview stage</b>
+            <small>Choose the stage you want to practice.</small>
+          </label>
+          <label className={`package-type-option ${booking.packageType === 'bundle' ? 'selected' : ''}`}>
+            <input
+              type="radio"
+              name={`${idPrefix}-packageType`}
+              value="bundle"
+              checked={booking.packageType === 'bundle'}
+              onChange={() => {
+                onChange('packageType', 'bundle')
+                onChange('interviewStage', '')
+              }}
+            />
+            <b>Multi-stage bundle</b>
+            <small>Practice for more than one stage.</small>
+          </label>
+        </div>
+        {errors.packageType && <span className="field-error">{errors.packageType}</span>}
+      </fieldset>
+
+      {booking.packageType === 'single' && (
+        <fieldset className="stage-picker">
+          <legend>Choose an interview stage</legend>
+          <div className="stage-options">
+            {businessConfig.stages.map((stage, index) => (
+              <label className={`stage-option ${booking.interviewStage === stage.id ? 'selected' : ''}`} key={stage.id}>
+                <input
+                  type="radio"
+                  name={`${idPrefix}-interviewStage`}
+                  value={stage.id}
+                  checked={booking.interviewStage === stage.id}
+                  onChange={() => chooseStage(stage.id)}
+                />
+                <span className="stage-option-top">
+                  <b><span className="stage-index">0{index + 1}</span> {stage.name}</b>
+                  <span>{stage.durations.join(' or ')} min</span>
+                </span>
+                <small>{stage.description}</small>
+              </label>
+            ))}
+          </div>
+          {errors.interviewStage && <span className="field-error">{errors.interviewStage}</span>}
+        </fieldset>
+      )}
+
+      {booking.packageType === 'bundle' && (
+        <fieldset className="bundle-picker">
+          <legend>Choose a bundle</legend>
+          <div className="bundle-options">
+            {businessConfig.bundles.map((bundle) => (
+              <label className={`bundle-option ${booking.bundleId === bundle.id ? 'selected' : ''}`} key={bundle.id}>
+                <input
+                  type="radio"
+                  name={`${idPrefix}-bundleId`}
+                  value={bundle.id}
+                  checked={booking.bundleId === bundle.id}
+                  onChange={() => chooseBundle(bundle.id)}
+                />
+                <span className="bundle-option-copy">
+                  <b>{bundle.name}</b>
+                  <small>{bundle.description}</small>
+                  <small>{bundle.stages.map((stageId) => {
+                    const stage = businessConfig.stages.find((item) => item.id === stageId)
+                    return `${stage?.name}: ${stage?.durations.join(' or ')} min`
+                  }).join(' · ')}</small>
+                </span>
+                <span className="bundle-check" aria-hidden="true">{booking.bundleId === bundle.id ? '✓' : '+'}</span>
+              </label>
+            ))}
+          </div>
+          {errors.bundleId && <span className="field-error">{errors.bundleId}</span>}
+        </fieldset>
+      )}
+
+      {booking.packageType === 'single' && booking.interviewStage === 'technical' && (
+        <fieldset className="duration-picker">
+          <legend>Choose your Technical Interview length</legend>
+          <div className="duration-options">
+            {([30, 45] as const).map((duration) => (
+              <label className={`duration-option ${booking.durationMinutes === duration ? 'selected' : ''}`} key={duration}>
+                <input
+                  type="radio"
+                  name={`${idPrefix}-technicalDuration`}
+                  checked={booking.durationMinutes === duration}
+                  onChange={() => chooseTechnicalDuration(duration)}
+                />
+                <b>{duration} minutes</b>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
+
+      {booking.packageType === 'bundle' && includesTechnical && (
+        <fieldset className="duration-picker">
+          <legend>Technical Interview length in this bundle</legend>
+          <div className="duration-options">
+            {([30, 45] as const).map((duration) => (
+              <label className={`duration-option ${booking.technicalDurationMinutes === duration ? 'selected' : ''}`} key={duration}>
+                <input
+                  type="radio"
+                  name={`${idPrefix}-bundleTechnicalDuration`}
+                  checked={booking.technicalDurationMinutes === duration}
+                  onChange={() => chooseTechnicalDuration(duration)}
+                />
+                <b>{duration} minutes</b>
+              </label>
+            ))}
+          </div>
+          <span className="field-hint">The bundle price stays the same for either length.</span>
+        </fieldset>
+      )}
+
+      <div className="selection-price" aria-live="polite">
+        {hasSelection && packagePrice !== null ? (
+          <>
+            <div className="selection-price-copy">
+              <span>YOUR COMPLETE PACKAGE</span>
+              <b>{formatPrice(packagePrice)}</b>
+              <small>{getPackageName(booking)} · {getPackageDurationMinutes(booking)} minutes total</small>
+            </div>
+            {booking.packageType === 'bundle' && selectedBundle && (
+              <span className="savings-note">Save {formatPrice(getBundleSavings(selectedBundle.id, booking.technicalDurationMinutes))}</span>
+            )}
+          </>
+        ) : (
+          <p>Choose your category and package to see the complete price.</p>
+        )}
+      </div>
+      <p className="included-line"><span>✓</span> Every package includes a live mock interview, feedback, written recap, and recommendations.</p>
+    </div>
+  )
 }
 
 const experienceOptions = [
@@ -70,14 +294,21 @@ function App() {
   const [requestReceived, setRequestReceived] = useState(false)
   const bookingRef = useRef<HTMLElement | null>(null)
 
-  const price = booking.jobCategory && booking.interviewStage
-    ? getPackagePrice(booking.jobCategory, booking.interviewStage)
-    : null
-  const selectedStage = businessConfig.stages.find((item) => item.id === booking.interviewStage)
+  const price = booking.jobCategory ? getPackagePrice(booking) : null
+  const packageName = getPackageName(booking)
+  const packageDuration = getPackageDurationMinutes(booking)
+  const packageStages = getPackageStageNames(booking)
 
   function updateField<Key extends keyof Booking>(key: Key, value: Booking[Key]) {
     setBooking((current) => ({ ...current, [key]: value }))
-    setErrors((current) => ({ ...current, [key]: undefined }))
+    setErrors((current) => ({
+      ...current,
+      [key]: undefined,
+      ...(key === 'jobCategory' || key === 'packageType' || key === 'interviewStage' ||
+        key === 'bundleId' || key === 'durationMinutes' || key === 'technicalDurationMinutes'
+        ? { packageType: undefined, interviewStage: undefined, bundleId: undefined, durationMinutes: undefined }
+        : {}),
+    }))
     setSubmitError('')
   }
 
@@ -85,8 +316,7 @@ function App() {
     window.setTimeout(() => bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
   }
 
-  function startBooking(stage?: InterviewStage) {
-    if (stage) updateField('interviewStage', stage)
+  function startBooking() {
     setStep(0)
     scrollToBooking()
   }
@@ -95,7 +325,16 @@ function App() {
     const nextErrors: Partial<Record<keyof Booking, string>> = {}
     if (step === 0) {
       if (!booking.jobCategory) nextErrors.jobCategory = 'Choose the category closest to the role.'
-      if (!booking.interviewStage) nextErrors.interviewStage = 'Choose the interview stage.'
+      if (!booking.packageType) nextErrors.packageType = 'Choose an individual stage or a bundle.'
+      if (booking.packageType === 'single' && !booking.interviewStage) {
+        nextErrors.interviewStage = 'Choose the interview stage you want to practice.'
+      }
+      if (booking.packageType === 'bundle' && !booking.bundleId) {
+        nextErrors.bundleId = 'Choose a bundle to continue.'
+      }
+      if (booking.interviewStage === 'technical' && !getStagePrice('technical', booking.durationMinutes)) {
+        nextErrors.durationMinutes = 'Choose a Technical Interview length.'
+      }
     }
     if (step === 1) {
       if (!booking.fullName.trim()) nextErrors.fullName = 'Enter your name.'
@@ -138,14 +377,17 @@ function App() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!validateCurrentStep() || !price || !selectedStage) return
+    if (!validateCurrentStep() || price === null || !packageName) return
     setIsSubmitting(true)
     setSubmitError('')
     try {
       await submitBookingRequest({
         ...booking,
+        durationMinutes: packageDuration,
         packagePrice: price,
-        packageName: selectedStage.name,
+        packageName,
+        packageDurationMinutes: packageDuration,
+        interviewStages: packageStages,
       })
       setRequestReceived(true)
     } catch (error) {
@@ -207,7 +449,7 @@ function App() {
             <div className="art-doodle doodle-one">✳</div>
             <div className="art-doodle doodle-two">✦</div>
             <div className="art-card">
-              <div className="art-card-top"><span className="live-dot" /> PRACTICE SESSION <span>30 MIN</span></div>
+              <div className="art-card-top"><span className="live-dot" /> PRACTICE CALL <span>ONLINE</span></div>
               <div className="conversation">
                 <div className="person person-coach"><span className="person-icon">M</span><div><b>Interviewer</b><i>Let’s start with you.</i></div></div>
                 <div className="speech-bubble">“Tell me a little about yourself.”</div>
@@ -216,14 +458,14 @@ function App() {
               <div className="art-card-foot"><span>Easy does it.</span><span className="tiny-spark">✳</span></div>
             </div>
             <div className="art-note"><span className="note-check">✓</span><span><b>Feedback included</b><small>Clear next steps, too</small></span></div>
-            <div className="art-price"><small>COMPLETE PACKAGE</small><b>from ₱100</b></div>
+            <div className="art-price"><small>IN EVERY PACKAGE</small><b>Feedback + recap</b></div>
           </div>
         </section>
 
         <div className="trust-strip">
           <div className="section-shell trust-inner">
             <span><i>01</i> One-on-one with a real person</span>
-            <span><i>02</i> A full 30-minute practice</span>
+            <span><i>02</i> 15–45 minutes for your stage</span>
             <span><i>03</i> Feedback and written recap included</span>
           </div>
         </div>
@@ -238,7 +480,7 @@ function App() {
               <span className="step-number">01</span>
               <div className="step-icon icon-choice" aria-hidden="true"><span>↗</span><i /><i /></div>
               <h3>Choose your package</h3>
-              <p>Pick the interview stage and job category. You’ll see the complete price before you send a request.</p>
+              <p>Choose an interview stage or bundle. Your complete price appears after you make your selections.</p>
             </article>
             <article className="how-card">
               <span className="step-number">02</span>
@@ -259,43 +501,23 @@ function App() {
         <section className="pricing-section" id="pricing">
           <div className="section-shell pricing-layout">
             <div className="pricing-intro">
-              <div className="eyebrow">Straightforward, complete pricing</div>
-              <h2>One session.<br />Everything you need.</h2>
-              <p>Every package includes a live mock interview, performance feedback, a written review and recap, and practical recommendations.</p>
+              <div className="eyebrow">Choose first. See your price.</div>
+              <h2>Practice for<br />your next stage.</h2>
+              <p>Pick a stage or bundle to see your full package price. Job category helps us tailor questions but never changes the price.</p>
               <div className="price-rule">
-                <span className="rule-icon">₱</span>
-                <p><b>Initial Screening is ₱100</b><br />For every job category. Later stages are priced by category.</p>
+                <span className="rule-icon">✓</span>
+                <p><b>One clear package price</b><br />A live mock interview, feedback, written recap, and recommendations are included.</p>
               </div>
-              <a className="text-link" href="#booking">See your exact package price <span aria-hidden="true">↓</span></a>
+              <a className="text-link" href="#booking">Book your selected package <span aria-hidden="true">↓</span></a>
             </div>
             <div className="price-preview">
               <div className="preview-heading">
-                <div><span className="eyebrow">Your package, at a glance</span><h3>Choose a category to see prices</h3></div>
-                <label className="preview-select-label" htmlFor="preview-category">Job category</label>
-                <select
-                  id="preview-category"
-                  className="preview-select"
-                  value={booking.jobCategory}
-                  onChange={(event) => updateField('jobCategory', event.target.value)}
-                >
-                  <option value="">Select category</option>
-                  {businessConfig.categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-                </select>
+                <div><span className="eyebrow">Build your practice package</span><h3>Your price follows your choices</h3></div>
               </div>
-              <div className="stage-price-list">
-                {businessConfig.stages.map((stage, index) => {
-                  const amount = booking.jobCategory ? getPackagePrice(booking.jobCategory, stage.id) : null
-                  return (
-                    <button className={`stage-price-row ${index === 0 ? 'stage-price-fixed' : ''}`} key={stage.id} type="button" onClick={() => startBooking(stage.id)}>
-                      <span className="stage-index">0{index + 1}</span>
-                      <span className="stage-price-name"><b>{stage.name}</b><small>{stage.priceNote}</small></span>
-                      <span className="stage-amount">{amount === null ? (stage.id === 'screening' ? '₱100' : '—') : formatPrice(amount)}<small>{stage.id === 'screening' ? 'fixed price' : `${stage.multiplierLabel} category base`}</small></span>
-                      <span className="row-arrow" aria-hidden="true">↗</span>
-                    </button>
-                  )
-                })}
-              </div>
-              <div className="preview-foot"><span>30-minute session</span><span>Written recap included</span></div>
+              <PackageSelector booking={booking} errors={{}} onChange={updateField} idPrefix="pricing" />
+              <button className="button button-primary selector-continue" type="button" onClick={startBooking}>
+                Continue with this package <span aria-hidden="true">→</span>
+              </button>
             </div>
           </div>
         </section>
@@ -306,7 +528,7 @@ function App() {
             <h2>Let’s make<br />practice happen.</h2>
             <p>Tell us a little about what you’re preparing for. We’ll confirm a time with you before anything is booked.</p>
             <div className="booking-aside-note"><span aria-hidden="true">↳</span><p><b>Just a request for now.</b><br />We’ll follow up to confirm availability, meeting details, and payment instructions.</p></div>
-            <div className="mini-price-card"><span>COMPLETE PACKAGE</span><b>{price !== null ? formatPrice(price) : 'from ₱100'}</b><small>{selectedStage?.name ?? '30-minute mock interview'}</small></div>
+            {price !== null && <div className="mini-price-card"><span>YOUR COMPLETE PACKAGE</span><b>{formatPrice(price)}</b><small>{packageName} · {packageDuration} minutes</small></div>}
           </div>
 
           <div className="wizard-card">
@@ -317,9 +539,10 @@ function App() {
                 <h2>Your request has<br />been received!</h2>
                 <p>This is a booking request, not a confirmed appointment. We’ll contact you to confirm availability, meeting details, and payment instructions.</p>
                 <div className="confirmation-summary">
-                  <div><span>Package</span><b>{selectedStage?.name} · 30 minutes</b></div>
+                  <div><span>Package</span><b>{packageName} · {packageDuration} minutes</b></div>
+                  <div><span>Included stages</span><b>{packageStages.join(', ')}</b></div>
                   <div><span>Job category</span><b>{businessConfig.categories.find((category) => category.id === booking.jobCategory)?.name}</b></div>
-                  <div><span>Complete package price</span><b>{price !== null && formatPrice(price)}</b></div>
+                  <div><span>Complete package price</span><b>{price !== null ? formatPrice(price) : ''}</b></div>
                   <div><span>Preferred schedule</span><b>{booking.preferredDate} at {booking.preferredTime} (Philippine time)</b></div>
                 </div>
                 <button className="button button-primary" type="button" onClick={startOver}>Start over</button>
@@ -335,32 +558,8 @@ function App() {
                 <form onSubmit={step === 3 ? handleSubmit : continueFlow} noValidate>
                   {step === 0 && (
                     <div className="wizard-content">
-                      <div className="wizard-title"><span className="step-kicker">01 / YOUR PACKAGE</span><h2>What are you preparing for?</h2><p>Choose your job category and interview stage. Your complete package price updates right away.</p></div>
-                      <Field id="jobCategory" label="Job category" error={errors.jobCategory}>
-                        <select id="jobCategory" value={booking.jobCategory} onChange={(event) => updateField('jobCategory', event.target.value)} aria-invalid={Boolean(errors.jobCategory)} aria-describedby={errors.jobCategory ? 'jobCategory-error' : undefined}>
-                          <option value="">Select a category</option>
-                          {businessConfig.categories.map((category) => <option key={category.id} value={category.id}>{category.name} · base {formatPrice(category.basePrice)}</option>)}
-                        </select>
-                      </Field>
-                      <fieldset className="stage-picker">
-                        <legend>Interview stage</legend>
-                        <div className="stage-options">
-                          {businessConfig.stages.map((stage) => (
-                            <label className={`stage-option ${booking.interviewStage === stage.id ? 'selected' : ''}`} key={stage.id}>
-                              <input type="radio" name="interviewStage" value={stage.id} checked={booking.interviewStage === stage.id} onChange={() => updateField('interviewStage', stage.id)} />
-                              <span className="stage-option-top"><b>{stage.name}</b><span>{booking.jobCategory ? formatPrice(getPackagePrice(booking.jobCategory, stage.id)) : stage.id === 'screening' ? '₱100' : stage.multiplierLabel}</span></span>
-                              <small>{stage.priceNote}</small>
-                            </label>
-                          ))}
-                        </div>
-                        {errors.interviewStage && <span className="field-error">{errors.interviewStage}</span>}
-                      </fieldset>
-                      <div className="duration-and-price">
-                        <div className="duration-box"><span className="duration-icon">◷</span><span><b>30-minute session</b><small>One-on-one, online</small></span></div>
-                        <div className="package-total"><span>COMPLETE PACKAGE</span><b>{price !== null ? formatPrice(price) : 'Choose a stage'}</b></div>
-                      </div>
-                      <p className="included-line"><span>✓</span> Live interview · Feedback · Written recap · Recommendations</p>
-                      <PriceExplanation categoryId={booking.jobCategory} stage={booking.interviewStage} />
+                      <div className="wizard-title"><span className="step-kicker">01 / YOUR PACKAGE</span><h2>What are you preparing for?</h2><p>Choose your job category and practice package. We’ll show the complete price after you choose.</p></div>
+                      <PackageSelector booking={booking} errors={errors} onChange={updateField} idPrefix="booking" />
                     </div>
                   )}
 
@@ -432,9 +631,10 @@ function App() {
                       <div className="review-summary">
                         <div className="review-package">
                           <span className="review-label">YOUR COMPLETE PACKAGE</span>
-                          <b>{selectedStage?.name} · 30 minutes</b>
+                          <b>{packageName} · {packageDuration} minutes</b>
+                          <span>{packageStages.join(' + ')}</span>
                           <span>{businessConfig.categories.find((category) => category.id === booking.jobCategory)?.name}</span>
-                          <strong>{price !== null && formatPrice(price)}</strong>
+                          <strong>{price !== null ? formatPrice(price) : ''}</strong>
                           <small>Live session, feedback, written recap, and recommendations included.</small>
                         </div>
                         <div className="review-details">
@@ -485,17 +685,6 @@ function App() {
       </footer>
     </>
   )
-}
-
-function PriceExplanation({ categoryId, stage }: { categoryId: string; stage: string }) {
-  if (!categoryId || !stage) return <p className="price-explanation">Choose a category and interview stage to see your full package price.</p>
-  const category = businessConfig.categories.find((item) => item.id === categoryId)
-  const stageInfo = businessConfig.stages.find((item) => item.id === stage)
-  if (!category || !stageInfo) return null
-  if (stageInfo.id === 'screening') {
-    return <p className="price-explanation">Initial Screening has one fixed price for every job category. No separate charge for the recap.</p>
-  }
-  return <p className="price-explanation">{stageInfo.name}: {formatPrice(category.basePrice)} category base price × {stageInfo.multiplierLabel}. The displayed amount covers the complete package.</p>
 }
 
 function SummaryRow({ label, value }: { label: string; value: string }) {

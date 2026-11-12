@@ -4,24 +4,30 @@ A mobile-first booking-request website for one-on-one interview practice. Built 
 
 ## What’s included
 
-- Four interview stages, a job-category selector, and an immediate complete-package price.
-- A 30-minute session with a live mock interview, performance feedback, written recap, and recommendations included.
+- Four interview stages and two multi-stage bundles. The selected package price appears after the visitor chooses a job category and package.
+- 15-, 30-, 45-, and Technical 30/45-minute options with their package prices configured in `src/config.ts`.
+- A live mock interview, performance feedback, written recap, and practical recommendations included with every package.
 - A guided booking request with validation, Back navigation, schedule summary, privacy notice, and explicit request-not-confirmation messaging.
 - An optional Google Apps Script endpoint that writes requests to a private Google Sheet. No credentials or spreadsheet IDs are stored in the website.
 - No local browser storage for booking data. If the endpoint is not configured, submission fails with a clear message and nothing is saved.
 
 ## Pricing
 
-The category base prices and stage rules are centralized in `src/config.ts`:
+Job category is used to tailor practice questions and does not change the price. Stage prices are centralized in `src/config.ts`:
 
-| Interview stage | Price |
-| --- | --- |
-| Initial Screening | Fixed ₱100 for every category |
-| Hiring Manager | Category base price × 1.25 |
-| Technical Interview | Category base price × 1.5 |
-| Final Interview | Category base price × 2 |
+| Interview stage | Price | Duration |
+| --- | ---: | --- |
+| Initial Screening | ₱100 | 15 minutes |
+| Hiring Manager Interview | ₱150 | 30 minutes |
+| Technical Interview | ₱200 / ₱220 | 30 / 45 minutes |
+| Final Interview | ₱250 | 45 minutes |
 
-Calculated prices are rounded to two decimal places. Session duration is currently fixed at 30 minutes. Update both the frontend configuration and the matching constants in `google-apps-script/Code.gs` when the owner changes the price list or package rules.
+| Bundle | Included stages | Price |
+| --- | --- | ---: |
+| Corporate Track | Initial Screening + Hiring Manager Interview | ₱220 (save ₱30) |
+| Executive Track | All four stages | ₱500 (save ₱200 with the 30-minute Technical option) |
+
+Executive Track can use a 30- or 45-minute Technical Interview. Its bundle price remains ₱500; the displayed savings are calculated against the selected stage durations. Booking summaries show the full session time across all included stages. Prices are displayed only after the visitor selects a job category and a stage or bundle. Update the frontend configuration and matching package validation in `google-apps-script/Code.gs` together if pricing changes.
 
 ## Run locally
 
@@ -63,13 +69,15 @@ Booking requests are sent only to a Google Apps Script web app. The spreadsheet 
 6. Restart Vite after changing `.env`. For production, set the same endpoint variable in the hosting provider’s build environment and rebuild.
 7. Submit a test request, confirm it appears in the private `Bookings` tab, then remove the test row.
 
+If you already deployed the earlier version of this Apps Script, update the script and deploy a new version. The booking columns now include package type, included stages, total duration, and the selected technical duration. Preserve any existing booking rows; if the current tab has the older columns, back it up and configure `SHEET_NAME` to use a new tab before accepting new requests.
+
 The endpoint URL is public and anonymous submission can attract spam. The script validates values, uses a honeypot, and prevents spreadsheet formula injection, but this is not a full anti-abuse service. Monitor the sheet and add an owner-approved anti-spam control before wider launch if needed. Keep Apps Script access, Sheet sharing, and account security restricted.
 
 If the endpoint is absent or misconfigured, the site does **not** show a success state. It does not silently store requests in the browser or send them to a placeholder contact.
 
 ## Owner setup before launch
 
-- Confirm the job-category base prices and the fixed 30-minute duration in both configuration files.
+- Confirm stage and bundle prices, durations, and bundle savings in both configuration files.
 - Review the privacy notice and applicable Philippine data-protection requirements. Set and clearly disclose a real retention/deletion period for booking data.
 - Confirm which meeting platform will be used with each customer. Explain any AI note-taking or transcription method before the call and ask for separate permission then; a booking request is not recording consent.
 - Add a real business contact channel only if the owner wants one displayed. No contact details, payment instructions, or calendar integrations are invented by this site.

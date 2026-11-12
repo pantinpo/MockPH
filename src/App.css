@@ -350,6 +350,135 @@ h1, h2, h3, p { margin-top: 0; }
   .stage-options { gap: 6px; }
 }
 
+/* Pricing is revealed only after the visitor selects a category and package. */
+.trust-inner span { font-size: 17px; gap: 13px; }
+.trust-inner i { font-size: 15px; font-weight: 700; }
+.art-price b { font-size: 13px; }
+.pricing-intro .price-rule { margin-bottom: 23px; }
+.price-preview { padding-bottom: 22px; }
+.preview-heading { grid-template-columns: 1fr; align-items: start; padding-bottom: 17px; }
+.preview-heading h3 { font-size: 20px; }
+.package-selector { padding-top: 20px; }
+.package-selector .field { margin-bottom: 20px; }
+.package-selector .field > label,
+.package-type-picker legend,
+.stage-picker legend,
+.bundle-picker legend,
+.duration-picker legend { font-size: 15px; }
+.package-selector .field-hint { line-height: 1.5; }
+.package-type-picker,
+.stage-picker,
+.bundle-picker,
+.duration-picker { border: 0; padding: 0; margin: 0 0 20px; }
+.package-type-picker legend,
+.stage-picker legend,
+.bundle-picker legend,
+.duration-picker legend { color: #52635a; font-weight: 700; padding: 0; margin-bottom: 10px; }
+.package-type-options { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.package-type-option,
+.bundle-option,
+.duration-option { position: relative; border: 1px solid #e4e9e3; border-radius: 10px; background: #fdfdfb; cursor: pointer; transition: border-color .2s, background .2s; }
+.package-type-option { min-height: 89px; padding: 14px; display: flex; flex-direction: column; gap: 7px; }
+.package-type-option b { color: #40574b; font-size: 14px; }
+.package-type-option small { color: #7e8d83; font-size: 12px; line-height: 1.5; }
+.package-type-option:hover,
+.bundle-option:hover,
+.duration-option:hover,
+.package-type-option.selected,
+.bundle-option.selected,
+.duration-option.selected { border-color: #75a393; background: #f0f6f1; }
+.package-type-option input,
+.bundle-option input,
+.duration-option input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.package-type-option:focus-within,
+.bundle-option:focus-within,
+.duration-option:focus-within { outline: 3px solid rgba(232, 131, 86, .65); outline-offset: 2px; }
+.package-selector .stage-options { grid-template-columns: 1fr 1fr; }
+.package-selector .stage-option { min-height: 108px; padding: 13px; }
+.package-selector .stage-option-top { align-items: flex-start; }
+.package-selector .stage-option-top b { font-size: 13px; line-height: 1.4; }
+.package-selector .stage-option-top > span { flex-shrink: 0; font-size: 12px; }
+.stage-index { display: inline-block; margin-right: 4px; font-size: 11px; }
+.package-selector .stage-option small { color: #77877d; font-size: 12px; line-height: 1.5; }
+.bundle-options { display: grid; gap: 9px; }
+.bundle-option { padding: 13px; display: flex; align-items: center; gap: 12px; }
+.bundle-option-copy { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+.bundle-option-copy b { font-size: 14px; color: #40574b; }
+.bundle-option-copy small { color: #7e8d83; font-size: 12px; line-height: 1.5; }
+.bundle-check { color: var(--teal); display: grid; place-items: center; flex-shrink: 0; width: 24px; height: 24px; border: 1px solid #dfe7df; border-radius: 8px; font-size: 14px; }
+.bundle-option.selected .bundle-check { color: white; background: var(--teal); border-color: var(--teal); }
+.duration-picker { padding: 13px; background: #f7f8f4; border-radius: 11px; }
+.duration-options { display: flex; gap: 9px; }
+.duration-option { min-width: 112px; padding: 10px 12px; display: flex; align-items: center; justify-content: center; }
+.duration-option b { color: #4a6054; font-size: 13px; }
+.selection-price { min-height: 84px; background: #edf4ee; border-radius: 12px; padding: 15px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.selection-price > p { font-size: 13px; line-height: 1.5; color: #79877d; margin: 0; }
+.selection-price-copy { display: flex; flex-direction: column; gap: 4px; }
+.selection-price-copy > span { color: #758e80; font-size: 10px; letter-spacing: 1px; font-weight: 700; }
+.selection-price-copy > b { color: var(--teal); font-family: var(--serif); font-size: 29px; line-height: 1.1; }
+.selection-price-copy > small { color: #718177; font-size: 12px; line-height: 1.5; }
+.savings-note { color: #1d6452; background: #dcece0; border-radius: 8px; padding: 8px 10px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.package-selector .included-line { color: #6d7f74; line-height: 1.6; margin: 14px 0 0; }
+.package-selector .included-line span { color: var(--teal); font-weight: 800; margin-right: 5px; }
+.selector-continue { width: 100%; margin-top: 17px; }
+.mini-price-card { min-width: 220px; }
+.wizard-content .package-selector .stage-options { grid-template-columns: 1fr 1fr; }
+.wizard-content .package-selector .stage-option { min-height: 115px; padding: 11px; }
+.wizard-content .package-selector .stage-option-top { flex-direction: row; gap: 5px; }
+.wizard-content .package-selector .stage-option-top b { font-size: 11px; }
+.wizard-content .package-selector .stage-option-top > span { font-size: 10px; }
+.wizard-content .package-selector .stage-option small { font-size: 10px; }
+.wizard-content .package-type-picker legend,
+.wizard-content .stage-picker legend,
+.wizard-content .bundle-picker legend,
+.wizard-content .duration-picker legend,
+.wizard-content .package-selector .field > label { font-size: 13px; }
+.wizard-content .package-type-option { min-height: 77px; padding: 10px; }
+.wizard-content .package-type-option b,
+.wizard-content .bundle-option-copy b { font-size: 12px; }
+.wizard-content .package-type-option small,
+.wizard-content .bundle-option-copy small { font-size: 10px; }
+.wizard-content .duration-option b { font-size: 12px; }
+.wizard-content .selection-price { min-height: 76px; padding: 12px; }
+.wizard-content .selection-price-copy > b { font-size: 25px; }
+.wizard-content .selection-price-copy > small { font-size: 10px; }
+.wizard-content .savings-note { font-size: 10px; }
+.wizard-content .package-selector .included-line { font-size: 11px; }
+
+@media (max-width: 680px) {
+  .trust-inner span { font-size: 15px; }
+  .trust-inner i { font-size: 14px; }
+  .pricing-layout { gap: 25px; }
+  .price-preview { padding: 18px 15px; }
+  .package-selector { padding-top: 17px; }
+  .package-selector .stage-options,
+  .wizard-content .package-selector .stage-options { grid-template-columns: 1fr; }
+  .package-selector .stage-option,
+  .wizard-content .package-selector .stage-option { min-height: 0; padding: 12px; }
+  .package-selector .stage-option-top,
+  .wizard-content .package-selector .stage-option-top { flex-direction: row; align-items: flex-start; }
+  .package-selector .stage-option-top b { font-size: 13px; }
+  .package-selector .stage-option-top > span { font-size: 12px; }
+  .package-selector .stage-option small { font-size: 12px; }
+  .wizard-content .package-selector .stage-option-top b { font-size: 12px; }
+  .wizard-content .package-selector .stage-option-top > span { font-size: 11px; }
+  .wizard-content .package-selector .stage-option small { font-size: 11px; }
+  .package-type-option { padding: 11px; }
+  .package-type-option b { font-size: 12px; }
+  .package-type-option small { font-size: 10px; }
+  .bundle-option-copy b { font-size: 12px; }
+  .bundle-option-copy small { font-size: 10px; }
+  .selection-price-copy > b { font-size: 26px; }
+  .selection-price-copy > small { font-size: 10px; }
+  .savings-note { font-size: 10px; }
+  .wizard-content .package-selector .included-line { font-size: 11px; }
+  .wizard-content .package-type-picker legend,
+  .wizard-content .stage-picker legend,
+  .wizard-content .bundle-picker legend,
+  .wizard-content .duration-picker legend,
+  .wizard-content .package-selector .field > label { font-size: 13px; }
+}
+
 /* Keep supporting text comfortably readable without overpowering headings. */
 .site-header nav a,
 .hero-lede,
@@ -484,4 +613,12 @@ h1, h2, h3, p { margin-top: 0; }
   .hero-reassurance {
     font-size: 12px;
   }
+}
+
+.trust-strip .trust-inner > span { font-size: 18px; }
+.trust-strip .trust-inner > span > i { font-size: 15px; }
+
+@media (max-width: 680px) {
+  .trust-strip .trust-inner > span { font-size: 16px; }
+  .trust-strip .trust-inner > span > i { font-size: 15px; }
 }
