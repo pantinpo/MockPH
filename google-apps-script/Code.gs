@@ -51,6 +51,7 @@ const HEADERS = [
 
 function doPost(event) {
   let success = false;
+  let responseToken = '';
   try {
     const rawPayload = event && event.parameter && event.parameter.payload;
     if (!rawPayload || rawPayload.length > 12000) {
@@ -58,6 +59,7 @@ function doPost(event) {
     }
 
     const booking = JSON.parse(rawPayload);
+    responseToken = typeof booking.responseToken === 'string' ? booking.responseToken : '';
     validateBooking_(booking);
     if (booking.honeypot) {
       throw new Error('Invalid request.');
@@ -116,7 +118,7 @@ function doPost(event) {
   } catch (error) {
     console.error(error && error.message ? error.message : 'Booking request could not be saved.');
   }
-  return response_(success);
+  return response_(success, responseToken);
 }
 
 function resolvePackage_(booking) {
@@ -219,10 +221,10 @@ function safeCell_(value) {
   return /^[=+\-@]/.test(text) ? "'" + text : text;
 }
 
-function response_(ok) {
-  const message = JSON.stringify({ type: RESULT_TYPE, ok: ok });
+function response_(ok, responseToken) {
+  const message = JSON.stringify({ type: RESULT_TYPE, ok: ok, responseToken: responseToken });
   return HtmlService.createHtmlOutput(
-    '<!doctype html><meta charset="utf-8"><script>window.parent.postMessage(' +
+    '<!doctype html><meta charset="utf-8"><script>window.top.postMessage(' +
       message +
       ', "*");</script>',
   ).setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);

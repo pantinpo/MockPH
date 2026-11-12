@@ -18,6 +18,8 @@ export async function submitBookingRequest(booking: BookingSubmission) {
     throw new Error('The booking endpoint must be a secure Google Apps Script web app URL. No request was sent.')
   }
 
+  const responseToken = crypto.randomUUID()
+
   return new Promise<void>((resolve, reject) => {
     const frameName = `mockcall-submit-${Date.now()}`
     const iframe = document.createElement('iframe')
@@ -35,7 +37,7 @@ export async function submitBookingRequest(booking: BookingSubmission) {
     const payloadField = document.createElement('input')
     payloadField.type = 'hidden'
     payloadField.name = 'payload'
-    payloadField.value = JSON.stringify(booking)
+    payloadField.value = JSON.stringify({ ...booking, responseToken })
     form.append(payloadField)
     document.body.append(iframe, form)
 
@@ -54,7 +56,7 @@ export async function submitBookingRequest(booking: BookingSubmission) {
       else resolve()
     }
     const onMessage = (event: MessageEvent) => {
-      if (event.source !== iframe.contentWindow || event.data?.type !== resultMessageType) return
+      if (event.data?.type !== resultMessageType || event.data.responseToken !== responseToken) return
       if (event.data.ok === true) finish()
       else finish(new Error('We could not save your request. Please try again later.'))
     }

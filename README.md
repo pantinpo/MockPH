@@ -69,7 +69,7 @@ Booking requests are sent only to a Google Apps Script web app. The spreadsheet 
 6. Restart Vite after changing `.env`. The GitHub Pages workflow sets the production endpoint in its build environment; update that value in `.github/workflows/deploy.yml` if the Apps Script deployment URL changes.
 7. Submit a test request, confirm it appears in the private `Bookings` tab, then remove the test row.
 
-If you already deployed the earlier version of this Apps Script, update the script and deploy a new version. The booking columns now include package type, included stages, total duration, and the selected technical duration. Preserve any existing booking rows; if the current tab has the older columns, back it up and configure `SHEET_NAME` to use a new tab before accepting new requests.
+If you already deployed the earlier version of this Apps Script, update the script and deploy a new version. The HTML response must post the result to `window.top` with the request's `responseToken`; otherwise the site cannot receive confirmation through Apps Script's sandboxed iframe. The booking columns now include package type, included stages, total duration, and the selected technical duration. Preserve any existing booking rows; if the current tab has the older columns, back it up and configure `SHEET_NAME` to use a new tab before accepting new requests.
 
 The endpoint URL is public and anonymous submission can attract spam. The script validates values, uses a honeypot, and prevents spreadsheet formula injection, but this is not a full anti-abuse service. Monitor the sheet and add an owner-approved anti-spam control before wider launch if needed. Keep Apps Script access, Sheet sharing, and account security restricted.
 
