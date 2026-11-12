@@ -262,6 +262,22 @@ function todayInManila() {
   }).format(new Date())
 }
 
+function getManilaWeekday(date: string) {
+  return new Date(`${date}T12:00:00+08:00`).getUTCDay()
+}
+
+function isClosedDate(date: string) {
+  const weekday = getManilaWeekday(date)
+  return weekday === 0 || weekday === 6
+}
+
+function latestStartTime(date: string, durationMinutes: number) {
+  const weekday = date ? getManilaWeekday(date) : -1
+  const closingMinutes = weekday === 5 ? 18 * 60 : 22 * 60
+  const latestMinutes = Math.floor((closingMinutes - durationMinutes) / 30) * 30
+  return `${String(Math.floor(latestMinutes / 60)).padStart(2, '0')}:${String(latestMinutes % 60).padStart(2, '0')}`
+}
+
 function Field({
   label,
   id,
@@ -292,7 +308,7 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [requestReceived, setRequestReceived] = useState(false)
-  const bookingRef = useRef<HTMLElement | null>(null)
+  const bookingRef = useRef<HTMLDivElement | null>(null)
 
   const price = booking.jobCategory ? getPackagePrice(booking) : null
   const packageName = getPackageName(booking)
@@ -312,8 +328,34 @@ function App() {
     setSubmitError('')
   }
 
-  function scrollToBooking() {
-    window.setTimeout(() => bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
+  function choosePreferredDate(date: string) {
+    if (date && isClosedDate(date)) {
+      updateField('preferredDate', '')
+      updateField('preferredTime', '')
+      setErrors((current) => ({ ...current, preferredDate: 'Bookings are available Monday to Friday. Saturday and Sunday are closed.' }))
+      return
+    }
+    updateField('preferredDate', date)
+    updateField('preferredTime', '')
+    setErrors((current) => ({ ...current, preferredDate: undefined, preferredTime: undefined }))
+  }
+
+  function scrollToBooking(targetId?: string) {
+    window.setTimeout(() => {
+      const target = (targetId && document.getElementById(targetId)) || bookingRef.current
+      target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 0)
+  }
+
+  function continueWithSelectedPackage() {
+    const selectionComplete = price !== null &&
+      Boolean(packageName) &&
+      packageDuration > 0 &&
+      (booking.interviewStage !== 'technical' || getStagePrice('technical', booking.durationMinutes) !== null)
+    setStep(selectionComplete ? 1 : 0)
+    setErrors({})
+    setSubmitError('')
+    scrollToBooking(selectionComplete ? 'booking-about-form' : undefined)
   }
 
   function startBooking() {
@@ -350,8 +392,19 @@ function App() {
       if (!booking.preferredDate) nextErrors.preferredDate = 'Choose a preferred date.'
       else if (booking.preferredDate < todayInManila()) {
         nextErrors.preferredDate = 'Choose today or a future date.'
+      } else if (isClosedDate(booking.preferredDate)) {
+        nextErrors.preferredDate = 'Bookings are available Monday to Friday. Saturday and Sunday are closed.'
       }
       if (!booking.preferredTime) nextErrors.preferredTime = 'Choose a preferred time.'
+      else if (booking.preferredDate) {
+        const [hours, minutes] = booking.preferredTime.split(':').map(Number)
+        const selectedMinutes = hours * 60 + minutes
+        const latestMinutes = latestStartTime(booking.preferredDate, packageDuration).split(':').map(Number)
+        const latestAllowed = latestMinutes[0] * 60 + latestMinutes[1]
+        if (selectedMinutes < 10 * 60 || selectedMinutes > latestAllowed || selectedMinutes % 30 !== 0) {
+          nextErrors.preferredTime = `Choose a time on the hour or half-hour from 10:00 AM to ${latestStartTime(booking.preferredDate, packageDuration)} so your session ends before closing.`
+        }
+      }
       if (!booking.privacyNoticeAccepted) {
         nextErrors.privacyNoticeAccepted = 'Please read and accept the privacy notice to continue.'
       }
@@ -432,8 +485,9 @@ function App() {
             <div className="eyebrow"><span className="eyebrow-dot" /> A little practice goes a long way</div>
             <h1>Your next interview starts with <em>practice.</em></h1>
             <p className="hero-lede">
-              Get comfortable answering questions with a relaxed, one-on-one mock interview.
-              Practice out loud, get useful feedback, and show up more prepared.
+              Practice one-on-one with an experienced interviewer who understands your industry
+              and the role you’re targeting. Get comfortable with realistic questions and leave
+              with practical feedback.
             </p>
             <div className="hero-price-callout">
               <strong>Packages start at ₱100</strong>
@@ -468,7 +522,7 @@ function App() {
 
         <div className="trust-strip">
           <div className="section-shell trust-inner">
-            <span><i>01</i> One-on-one with a real person</span>
+            <span><i>01</i> A real interviewer familiar with your field</span>
             <span><i>02</i> 15–45 minutes for your stage</span>
             <span><i>03</i> Feedback and written recap included</span>
           </div>
@@ -496,7 +550,7 @@ function App() {
               <span className="step-number">03</span>
               <div className="step-icon icon-spark" aria-hidden="true"><span>✳</span></div>
               <h3>Practice and improve</h3>
-              <p>Meet online, answer realistic questions, then get useful feedback and a written recap.</p>
+              <p>We’ll connect you with an interviewer familiar with your industry for realistic practice, useful feedback, and a written recap.</p>
             </article>
           </div>
           <p className="meeting-note">We’ll agree on an online meeting platform together, such as Google Meet or Microsoft Teams.</p>
@@ -519,23 +573,23 @@ function App() {
                 <div><span className="eyebrow">Build your practice package</span><h3>Your price follows your choices</h3></div>
               </div>
               <PackageSelector booking={booking} errors={{}} onChange={updateField} idPrefix="pricing" />
-              <button className="button button-primary selector-continue" type="button" onClick={startBooking}>
+              <button className="button button-primary selector-continue" type="button" onClick={continueWithSelectedPackage}>
                 Continue with this package <span aria-hidden="true">→</span>
               </button>
             </div>
           </div>
         </section>
 
-        <section className="booking-section section-shell" id="booking" ref={bookingRef}>
+        <section className="booking-section section-shell" id="booking">
           <div className="booking-aside">
             <div className="eyebrow">Your next step</div>
             <h2>Let’s make<br />practice happen.</h2>
-            <p>Tell us a little about what you’re preparing for. We’ll confirm a time with you before anything is booked.</p>
+            <p>Tell us what you’re preparing for, and we’ll connect you with an interviewer familiar with your industry and role. We’ll confirm a time before anything is booked.</p>
             <div className="booking-aside-note"><span aria-hidden="true">↳</span><p><b>Just a request for now.</b><br />We’ll follow up to confirm availability, meeting details, and payment instructions.</p></div>
             {price !== null && <div className="mini-price-card"><span>YOUR COMPLETE PACKAGE</span><b>{formatPrice(price)}</b><small>{packageName} · {packageDuration} minutes</small></div>}
           </div>
 
-          <div className="wizard-card">
+          <div className="wizard-card" ref={bookingRef}>
             {requestReceived ? (
               <div className="confirmation">
                 <div className="confirmation-icon" aria-hidden="true">✓</div>
@@ -570,7 +624,7 @@ function App() {
                   {step === 1 && (
                     <div className="wizard-content">
                       <div className="wizard-title"><span className="step-kicker">02 / ABOUT YOU</span><h2>Who’s getting ready?</h2><p>We only need a few details to shape the practice around your goals.</p></div>
-                      <div className="field-grid">
+                      <div className="field-grid" id="booking-about-form">
                         <Field id="fullName" label="Full name" error={errors.fullName}>
                           <input id="fullName" autoComplete="name" value={booking.fullName} onChange={(event) => updateField('fullName', event.target.value)} placeholder="e.g. Alex Santos" aria-invalid={Boolean(errors.fullName)} aria-describedby={errors.fullName ? 'fullName-error' : undefined} />
                         </Field>
@@ -600,13 +654,13 @@ function App() {
 
                   {step === 2 && (
                     <div className="wizard-content">
-                      <div className="wizard-title"><span className="step-kicker">03 / SCHEDULE</span><h2>When works for you?</h2><p>Share a preferred time. We’ll check availability and confirm with you.</p></div>
+                      <div className="wizard-title"><span className="step-kicker">03 / SCHEDULE</span><h2>When works for you?</h2><p>Choose a weekday and a time during our open hours. All times are Philippine time.</p></div>
                       <div className="field-grid">
                         <Field id="preferredDate" label="Preferred date" error={errors.preferredDate}>
-                          <input id="preferredDate" type="date" min={todayInManila()} value={booking.preferredDate} onChange={(event) => updateField('preferredDate', event.target.value)} aria-invalid={Boolean(errors.preferredDate)} aria-describedby={errors.preferredDate ? 'preferredDate-error' : undefined} />
+                          <input id="preferredDate" type="date" min={todayInManila()} value={booking.preferredDate} onChange={(event) => choosePreferredDate(event.target.value)} aria-invalid={Boolean(errors.preferredDate)} aria-describedby={errors.preferredDate ? 'preferredDate-error' : undefined} />
                         </Field>
-                        <Field id="preferredTime" label="Preferred time" error={errors.preferredTime} hint="All times are Philippine time (Asia/Manila).">
-                          <input id="preferredTime" type="time" value={booking.preferredTime} onChange={(event) => updateField('preferredTime', event.target.value)} aria-invalid={Boolean(errors.preferredTime)} aria-describedby={errors.preferredTime ? 'preferredTime-error' : undefined} />
+                        <Field id="preferredTime" label="Preferred time" error={errors.preferredTime} hint="Choose times on the hour or half-hour. Mon–Thu: 10:00 AM–10:00 PM · Fri: 10:00 AM–6:00 PM · Closed weekends. Your session must end by closing.">
+                          <input id="preferredTime" type="time" min="10:00" max={latestStartTime(booking.preferredDate, packageDuration)} step={1800} value={booking.preferredTime} onChange={(event) => updateField('preferredTime', event.target.value)} aria-invalid={Boolean(errors.preferredTime)} aria-describedby={errors.preferredTime ? 'preferredTime-error' : undefined} />
                         </Field>
                       </div>
                       <Field id="notes" label="Anything else we should know? (optional)" hint="For example, an interview format or a question you find tricky.">

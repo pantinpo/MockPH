@@ -134,7 +134,7 @@ h1, h2, h3, p { margin-top: 0; }
 .mini-price-card b { color: var(--teal); font-size: 22px; font-family: var(--serif); }
 .mini-price-card small { color: #819087; font-size: 9px; }
 
-.wizard-card { background: #fff; border: 1px solid #eee; border-radius: var(--radius-card); box-shadow: 0 18px 58px rgba(45, 59, 49, .07); overflow: hidden; }
+.wizard-card { background: #fff; border: 1px solid #eee; border-radius: var(--radius-card); box-shadow: 0 18px 58px rgba(45, 59, 49, .07); overflow: hidden; scroll-margin-top: 100px; }
 .wizard-top { padding: 24px 31px 0; }
 .wizard-topline { display: flex; justify-content: space-between; color: #98a39c; font-weight: 700; font-size: 8px; letter-spacing: 1.2px; }
 .progress-track { height: 4px; border-radius: 4px; overflow: hidden; background: #edf0eb; margin-top: 13px; }
@@ -157,6 +157,7 @@ h1, h2, h3, p { margin-top: 0; }
 .field-hint { color: #9aa49c; font-size: 9px; }
 .field-error { color: #b94a3b; font-size: 10px; line-height: 1.5; }
 .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.field-grid#booking-about-form { scroll-margin-top: 100px; }
 .stage-picker { border: 0; padding: 0; margin: 4px 0 18px; }
 .stage-picker legend { margin-bottom: 9px; padding: 0; }
 .stage-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }

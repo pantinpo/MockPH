@@ -66,6 +66,7 @@ function doPost(event) {
     }
 
     const selection = resolvePackage_(booking);
+    validateSchedule_(booking, selection.duration);
     if (Number(booking.packagePrice) !== selection.price ||
         Number(booking.durationMinutes) !== selection.duration ||
         Number(booking.packageDurationMinutes) !== selection.duration) {
@@ -213,6 +214,30 @@ function validateBooking_(booking) {
   }
   if (!['first', 'some', 'experienced'].includes(booking.experienceLevel)) {
     throw new Error('Invalid interview experience level.');
+  }
+}
+
+function validateSchedule_(booking, durationMinutes) {
+  const dateParts = booking.preferredDate.split('-').map(Number);
+  const selectedDate = new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2]));
+  if (selectedDate.toISOString().slice(0, 10) !== booking.preferredDate) {
+    throw new Error('Invalid preferred date.');
+  }
+  if (booking.preferredDate < Utilities.formatDate(new Date(), 'Asia/Manila', 'yyyy-MM-dd')) {
+    throw new Error('The preferred date is in the past.');
+  }
+
+  const weekday = selectedDate.getUTCDay();
+  if (weekday === 0 || weekday === 6) {
+    throw new Error('Bookings are not available on weekends.');
+  }
+
+  const timeParts = booking.preferredTime.split(':').map(Number);
+  const selectedMinutes = timeParts[0] * 60 + timeParts[1];
+  const closingMinutes = weekday === 5 ? 18 * 60 : 22 * 60;
+  const latestStartMinutes = Math.floor((closingMinutes - durationMinutes) / 30) * 30;
+  if (selectedMinutes < 10 * 60 || selectedMinutes > latestStartMinutes || selectedMinutes % 30 !== 0) {
+    throw new Error('The preferred time is outside booking hours.');
   }
 }
 
