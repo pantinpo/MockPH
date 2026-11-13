@@ -87,4 +87,4 @@ If the endpoint is absent or misconfigured, the site does **not** show a success
 
 Run `npm run build` and deploy the generated `dist/` folder to any static host that supports single-page applications. Set `VITE_GOOGLE_APPS_SCRIPT_URL` and `VITE_TURNSTILE_SITE_KEY` in the host’s build environment before building. For GitHub Pages, the deployed Apps Script URL and site key are configured in `.github/workflows/deploy.yml`. The Apps Script web app must be deployed separately.
 
-The canonical URL, social-sharing URLs, structured-data URL, and sitemap are set for `https://pantinpo.github.io/MockPH/` in `index.html` and `public/sitemap.xml`. Vite’s base path is also set to `/MockPH/` for the project’s GitHub Pages deployment. Update those URLs, the sitemap reference in `public/robots.txt`, and Vite’s base path if the production domain or hosting path changes.
+The canonical URL, social-sharing URLs, structured-data URL, and sitemap are set for `https://mockph.com/` in `index.html` and `public/sitemap.xml`. Vite’s base path is `/` for the custom domain. Update those URLs and the sitemap reference in `public/robots.txt` if the production domain changes.

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://pantinpo.github.io/MockPH/sitemap.xml
+Sitemap: https://mockph.com/sitemap.xml
