@@ -66,7 +66,7 @@ export const businessConfig = {
       description: 'All four interview stages',
     },
   ],
-  privacyNotice: 'Your details are stored in the service operator’s private booking sheet and used to follow up on this request. The operator should set and disclose a deletion schedule before launch.',
+  privacyNotice: 'Your booking details are stored in the service operator’s private booking sheet and used to follow up on this request. This site also uses Google Analytics to measure visits; Google may collect page, browser, and device information. See Google’s Privacy Policy for details. The operator should set and disclose a deletion schedule for booking data before launch.',
   aiNotesDisclosure: 'We may use meeting notes or AI-assisted transcription to help prepare your feedback. We will explain the method and ask permission before the session. You can decline recording or transcription and still continue.',
 } as const
 

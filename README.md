@@ -79,10 +79,12 @@ If the endpoint is absent or misconfigured, the site does **not** show a success
 ## Owner setup before launch
 
 - Confirm stage and bundle prices, durations, and bundle savings in both configuration files.
-- Review the privacy notice and applicable Philippine data-protection requirements. Set and clearly disclose a real retention/deletion period for booking data.
+- Review the Google Analytics disclosure, privacy notice, and applicable Philippine data-protection requirements. Set and clearly disclose a real retention/deletion period for booking data.
 - Confirm which meeting platform will be used with each customer. Explain any AI note-taking or transcription method before the call and ask for separate permission then; a booking request is not recording consent.
 - Add a real business contact channel only if the owner wants one displayed. No contact details, payment instructions, or calendar integrations are invented by this site.
 
 ## Deployment
 
 Run `npm run build` and deploy the generated `dist/` folder to any static host that supports single-page applications. Set `VITE_GOOGLE_APPS_SCRIPT_URL` and `VITE_TURNSTILE_SITE_KEY` in the host’s build environment before building. For GitHub Pages, the deployed Apps Script URL and site key are configured in `.github/workflows/deploy.yml`. The Apps Script web app must be deployed separately.
+
+The canonical URL, social-sharing URLs, structured-data URL, and sitemap are set for `https://pantinpo.github.io/MockPH/` in `index.html` and `public/sitemap.xml`. Vite’s base path is also set to `/MockPH/` for the project’s GitHub Pages deployment. Update those URLs, the sitemap reference in `public/robots.txt`, and Vite’s base path if the production domain or hosting path changes.

@@ -890,7 +890,11 @@ function App() {
           <span>Practice before the real interview.</span>
           <a href="#top">Back to top ↑</a>
         </div>
-        <div className="section-shell footer-legal">Privacy notice and retention settings should be reviewed by the service owner before launch, including applicable Philippine data-protection requirements.</div>
+        <div className="section-shell footer-legal">
+          This site uses Google Analytics to measure visits; Google may collect page, browser, and device information.{' '}
+          <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a>.
+          {' '}The service owner should review the privacy notice and booking-data retention settings before launch, including applicable Philippine data-protection requirements.
+        </div>
       </footer>
     </>
   )
