@@ -58,20 +58,21 @@ Booking requests are sent only to a Google Apps Script web app. The spreadsheet 
 1. Create a Google Sheet owned by the service operator. Do not share the spreadsheet with customers or publish it to the web.
 2. Create a standalone Google Apps Script project and copy `google-apps-script/Code.gs` into its `Code.gs` file.
 3. In Apps Script **Project Settings → Script properties**, add `SPREADSHEET_ID` with the ID from the Sheet URL. Do not put this ID in frontend environment variables or source code.
-4. Deploy the script as a web app that **executes as the owner** and accepts requests from **Anyone**. This is necessary for visitors who are not signed into the owner’s Google account. The public endpoint is write-only, validates the booking and price, and does not expose a sheet-reading route. Keep the spreadsheet’s own sharing settings restricted to the owner.
-5. Copy the deployed web app URL (the `https://script.google.com/macros/s/.../exec` URL) to a local `.env` file for local testing:
+4. In the same Script properties, add `TURNSTILE_SECRET_KEY` with the Turnstile secret key and `TURNSTILE_ALLOWED_HOSTNAMES` with the exact hostname(s) allowed to submit, comma-separated (for example, `example.com,www.example.com`). Do not put the secret key in frontend code, a `VITE_` variable, or the repository. Configure the same production hostnames in the Turnstile widget settings.
+5. Deploy the script as a web app that **executes as the owner** and accepts requests from **Anyone**. This is necessary for visitors who are not signed into the owner’s Google account. The public endpoint is write-only, validates the booking, price, Turnstile token, and hostname, and does not expose a sheet-reading route. Keep the spreadsheet’s own sharing settings restricted to the owner.
+6. Copy the deployed web app URL (the `https://script.google.com/macros/s/.../exec` URL) to a local `.env` file for local testing:
 
    ```dotenv
    VITE_GOOGLE_APPS_SCRIPT_URL=https://script.google.com/macros/s/REPLACE_WITH_DEPLOYMENT_ID/exec
    ```
 
-   `.env.example` is a template. Never put Google account credentials, an API key, or the spreadsheet ID in a `VITE_` variable. The web app URL is public and is embedded in the built website.
-6. Restart Vite after changing `.env`. The GitHub Pages workflow sets the production endpoint in its build environment; update that value in `.github/workflows/deploy.yml` if the Apps Script deployment URL changes.
-7. Submit a test request, confirm it appears in the private `Bookings` tab, then remove the test row.
+   `.env.example` includes the public Turnstile site key. A site key is safe to embed; the secret key is not. Never put Google account credentials, an API key, the Turnstile secret, or the spreadsheet ID in a `VITE_` variable. The web app URL and site key are public and embedded in the built website.
+7. Restart Vite after changing `.env`. The GitHub Pages workflow sets the production endpoint and Turnstile site key in its build environment; update those values in `.github/workflows/deploy.yml` if they change.
+8. Submit a test request, confirm it appears in the private `Bookings` tab, then remove the test row.
 
 If you already deployed the earlier version of this Apps Script, update the script and deploy a new version. The HTML response must post the result to `window.top` with the request's `responseToken`; otherwise the site cannot receive confirmation through Apps Script's sandboxed iframe. The booking columns now include package type, included stages, total duration, and the selected technical duration. Preserve any existing booking rows; if the current tab has the older columns, back it up and configure `SHEET_NAME` to use a new tab before accepting new requests.
 
-The endpoint URL is public and anonymous submission can attract spam. The script validates values, uses a honeypot, and prevents spreadsheet formula injection, but this is not a full anti-abuse service. Monitor the sheet and add an owner-approved anti-spam control before wider launch if needed. Keep Apps Script access, Sheet sharing, and account security restricted.
+The endpoint URL is public and anonymous submission can attract spam. The script validates values, requires successful Turnstile Siteverify validation, uses a honeypot, and prevents spreadsheet formula injection. Turnstile tokens are single-use and expire after five minutes. Keep Apps Script access, Sheet sharing, and account security restricted. If a key has been shared in chat or committed, rotate it in Cloudflare and update the Apps Script property.
 
 If the endpoint is absent or misconfigured, the site does **not** show a success state. It does not silently store requests in the browser or send them to a placeholder contact.
 
@@ -84,4 +85,4 @@ If the endpoint is absent or misconfigured, the site does **not** show a success
 
 ## Deployment
 
-Run `npm run build` and deploy the generated `dist/` folder to any static host that supports single-page applications. Set `VITE_GOOGLE_APPS_SCRIPT_URL` in the host’s build environment before building. For GitHub Pages, the deployed Apps Script URL is configured in `.github/workflows/deploy.yml`. The Apps Script web app must be deployed separately.
+Run `npm run build` and deploy the generated `dist/` folder to any static host that supports single-page applications. Set `VITE_GOOGLE_APPS_SCRIPT_URL` and `VITE_TURNSTILE_SITE_KEY` in the host’s build environment before building. For GitHub Pages, the deployed Apps Script URL and site key are configured in `.github/workflows/deploy.yml`. The Apps Script web app must be deployed separately.

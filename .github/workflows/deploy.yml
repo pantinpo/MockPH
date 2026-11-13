@@ -30,6 +30,7 @@ jobs:
       - name: Build website
         env:
           VITE_GOOGLE_APPS_SCRIPT_URL: https://script.google.com/macros/s/AKfycbwCao9jflojWPgXQ-6FGIlZ4Bi9HhGfdCqijzqHny-pC_NW-WiVsFvs1oJfqu0jBiejmA/exec
+          VITE_TURNSTILE_SITE_KEY: 0x4AAAAAAF_wqjtJ2JSUZcxN
         run: npm run build
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

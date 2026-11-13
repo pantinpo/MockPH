@@ -12,7 +12,10 @@ import {
 } from './config'
 import type { Booking, InterviewBundle, InterviewStage } from './config'
 import { submitBookingRequest } from './submission'
+import TurnstileWidget from './TurnstileWidget'
 import './App.css'
+
+const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY?.trim() ?? ''
 
 const initialBooking: Booking = {
   fullName: '',
@@ -308,6 +311,8 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [requestReceived, setRequestReceived] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const [turnstileResetVersion, setTurnstileResetVersion] = useState(0)
   const bookingRef = useRef<HTMLDivElement | null>(null)
 
   const price = booking.jobCategory ? getPackagePrice(booking) : null
@@ -425,12 +430,17 @@ function App() {
     setStep((current) => Math.max(current - 1, 0))
     setErrors({})
     setSubmitError('')
+    setTurnstileToken('')
     scrollToBooking()
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!validateCurrentStep() || price === null || !packageName) return
+    if (!turnstileToken) {
+      setSubmitError('Complete the verification before sending your request.')
+      return
+    }
     setIsSubmitting(true)
     setSubmitError('')
     try {
@@ -441,10 +451,12 @@ function App() {
         packageName,
         packageDurationMinutes: packageDuration,
         interviewStages: packageStages,
-      })
+      }, turnstileToken)
       setRequestReceived(true)
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'We could not send your request. Please try again.')
+      setTurnstileToken('')
+      setTurnstileResetVersion((version) => version + 1)
     } finally {
       setIsSubmitting(false)
     }
@@ -456,6 +468,7 @@ function App() {
     setErrors({})
     setSubmitError('')
     setRequestReceived(false)
+    setTurnstileToken('')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -707,6 +720,11 @@ function App() {
                         </div>
                       </div>
                       <div className="request-warning"><span aria-hidden="true">↗</span><p>This sends a <b>booking request</b>, not a confirmed appointment. We’ll contact you to confirm availability, meeting details, and payment instructions.</p></div>
+                      <TurnstileWidget
+                        siteKey={turnstileSiteKey}
+                        onToken={setTurnstileToken}
+                        resetVersion={turnstileResetVersion}
+                      />
                       {submitError && <div className="submit-error" role="alert">{submitError}</div>}
                     </div>
                   )}
@@ -716,7 +734,7 @@ function App() {
                     {step < 3 ? (
                       <button className="button button-primary" type="submit">Continue <span aria-hidden="true">→</span></button>
                     ) : (
-                      <button className="button button-primary" type="submit" disabled={isSubmitting}>
+                      <button className="button button-primary" type="submit" disabled={isSubmitting || !turnstileToken}>
                         {isSubmitting ? <><span className="button-spinner" /> Sending request…</> : <>Send booking request <span aria-hidden="true">→</span></>}
                       </button>
                     )}

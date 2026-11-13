@@ -2,7 +2,7 @@ import type { BookingSubmission } from './config'
 
 const resultMessageType = 'mockcall-booking-result'
 
-export async function submitBookingRequest(booking: BookingSubmission) {
+export async function submitBookingRequest(booking: BookingSubmission, turnstileToken: string) {
   const endpoint = import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL?.trim()
   if (!endpoint) {
     throw new Error('Booking requests are not connected yet. Please try again later; no request was sent or saved.')
@@ -37,7 +37,7 @@ export async function submitBookingRequest(booking: BookingSubmission) {
     const payloadField = document.createElement('input')
     payloadField.type = 'hidden'
     payloadField.name = 'payload'
-    payloadField.value = JSON.stringify({ ...booking, responseToken })
+    payloadField.value = JSON.stringify({ ...booking, turnstileToken, responseToken })
     form.append(payloadField)
     document.body.append(iframe, form)
 

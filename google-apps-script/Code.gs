@@ -72,6 +72,7 @@ function doPost(event) {
         Number(booking.packageDurationMinutes) !== selection.duration) {
       throw new Error('Package price or duration did not match the configured selection.');
     }
+    validateTurnstile_(booking.turnstileToken);
 
     const lock = LockService.getScriptLock();
     lock.waitLock(10000);
@@ -120,6 +121,45 @@ function doPost(event) {
     console.error(error && error.message ? error.message : 'Booking request could not be saved.');
   }
   return response_(success, responseToken);
+}
+
+function validateTurnstile_(token) {
+  const properties = PropertiesService.getScriptProperties();
+  const secret = properties.getProperty('TURNSTILE_SECRET_KEY');
+  const allowedHostnames = (properties.getProperty('TURNSTILE_ALLOWED_HOSTNAMES') || '')
+    .split(',')
+    .map(function (hostname) { return hostname.trim().toLowerCase(); })
+    .filter(function (hostname) { return hostname; });
+
+  if (!secret) {
+    throw new Error('Set TURNSTILE_SECRET_KEY in the script properties before accepting requests.');
+  }
+  if (!allowedHostnames.length) {
+    throw new Error('Set TURNSTILE_ALLOWED_HOSTNAMES in the script properties before accepting requests.');
+  }
+  if (typeof token !== 'string' || !token || token.length > 2048) {
+    throw new Error('A valid Turnstile token is required.');
+  }
+
+  const response = UrlFetchApp.fetch(
+    'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+    {
+      method: 'post',
+      contentType: 'application/x-www-form-urlencoded',
+      payload: { secret: secret, response: token },
+      muteHttpExceptions: true,
+    },
+  );
+  if (response.getResponseCode() !== 200) {
+    throw new Error('Turnstile verification service returned an unsuccessful response.');
+  }
+
+  const result = JSON.parse(response.getContentText());
+  if (result.success !== true ||
+      typeof result.hostname !== 'string' ||
+      allowedHostnames.indexOf(result.hostname.toLowerCase()) === -1) {
+    throw new Error('Turnstile verification failed.');
+  }
 }
 
 function resolvePackage_(booking) {
@@ -247,7 +287,8 @@ function safeCell_(value) {
 }
 
 function response_(ok, responseToken) {
-  const message = JSON.stringify({ type: RESULT_TYPE, ok: ok, responseToken: responseToken });
+  const message = JSON.stringify({ type: RESULT_TYPE, ok: ok, responseToken: responseToken })
+    .replace(/</g, '\\u003c');
   return HtmlService.createHtmlOutput(
     '<!doctype html><meta charset="utf-8"><script>window.top.postMessage(' +
       message +
