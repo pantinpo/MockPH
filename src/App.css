@@ -147,7 +147,7 @@ h1, h2, h3, p { margin-top: 0; }
 .wizard-title h2 { font-family: var(--serif); color: var(--ink); letter-spacing: -.8px; font-size: 24px; line-height: 1.25; margin: 9px 0 7px; }
 .wizard-title p { color: #859087; font-size: 11px; line-height: 1.6; margin-bottom: 0; }
 .field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px; min-width: 0; }
-.field > label, .stage-picker legend { color: #52635a; font-size: 10px; font-weight: 700; }
+.field > label, .field > .field-label, .stage-picker legend { color: #52635a; font-size: 10px; font-weight: 700; }
 .field input, .field select, .field textarea { border: 1px solid #e4e9e3; background: #fdfdfb; border-radius: 8px; color: #354940; outline: none; width: 100%; transition: border-color .2s, box-shadow .2s; }
 .field input, .field select { height: 43px; padding: 0 12px; }
 .field textarea { min-height: 76px; resize: vertical; padding: 11px 12px; line-height: 1.5; }
@@ -156,6 +156,17 @@ h1, h2, h3, p { margin-top: 0; }
 .field [aria-invalid='true'] { border-color: #c85f4e; }
 .field-hint { color: #9aa49c; font-size: 9px; }
 .field-error { color: #b94a3b; font-size: 10px; line-height: 1.5; }
+.date-picker { border: 1px solid #e4e9e3; border-radius: 8px; padding: 9px; background: #fdfdfb; }
+.calendar-header { display: grid; grid-template-columns: 34px 1fr 34px; align-items: center; gap: 5px; margin-bottom: 8px; text-align: center; color: #52635a; font-size: 11px; }
+.calendar-nav { border: 0; border-radius: 7px; height: 32px; background: #edf3ed; color: var(--teal); font-size: 19px; cursor: pointer; }
+.calendar-nav:disabled { color: #b5c0b8; cursor: not-allowed; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+.calendar-weekday, .calendar-empty, .calendar-day { min-width: 0; aspect-ratio: 1; display: grid; place-items: center; }
+.calendar-weekday { color: #87958c; font-size: 9px; font-weight: 700; }
+.calendar-day { border: 0; border-radius: 7px; background: transparent; color: #52635a; font: inherit; font-size: 10px; cursor: pointer; }
+.calendar-day:hover:not(:disabled), .calendar-day.selected { background: #e4f0e5; color: var(--teal); font-weight: 700; }
+.calendar-day:disabled { color: #c0c8c1; background: transparent; cursor: not-allowed; }
+.date-picker[aria-invalid='true'] { border-color: #c85f4e; }
 .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .field-grid#booking-about-form { scroll-margin-top: 100px; }
 .stage-picker { border: 0; padding: 0; margin: 4px 0 18px; }
@@ -514,6 +525,7 @@ h1, h2, h3, p { margin-top: 0; }
 }
 
 .field > label,
+.field > .field-label,
 .stage-picker legend,
 .field input,
 .field select,
@@ -594,6 +606,7 @@ h1, h2, h3, p { margin-top: 0; }
   }
 
   .field > label,
+  .field > .field-label,
   .stage-picker legend,
   .stage-option-top b,
   .stage-option-top > span {
@@ -676,6 +689,7 @@ h1, h2, h3, p { margin-top: 0; }
 }
 
 .field > label,
+.field > .field-label,
 .stage-picker legend,
 .field input,
 .field select,

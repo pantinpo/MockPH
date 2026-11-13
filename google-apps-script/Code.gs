@@ -16,13 +16,13 @@ const CATEGORIES = {
   'senior-management': 'Senior Management',
 };
 const STAGES = {
-  screening: { name: 'Initial Screening', duration: 15, price: 100 },
-  hiringManager: { name: 'Hiring Manager Interview', duration: 30, price: 150 },
-  technical: { name: 'Technical Interview', durations: [30, 45], prices: { 30: 200, 45: 220 } },
+  screening: { name: 'Initial Screening', durations: [15, 30], defaultDuration: 30, prices: { 15: 100, 30: 100 } },
+  hiringManager: { name: 'Hiring Manager Interview', duration: 30, price: 100 },
+  technical: { name: 'Technical Interview', duration: 45, price: 200 },
   final: { name: 'Final Interview', duration: 45, price: 250 },
 };
 const BUNDLES = {
-  corporate: { name: 'Corporate Track', stages: ['screening', 'hiringManager'], price: 220 },
+  corporate: { name: 'Corporate Track', stages: ['screening', 'hiringManager'], price: 200 },
   executive: { name: 'Executive Track', stages: ['screening', 'hiringManager', 'technical', 'final'], price: 500 },
 };
 const HEADERS = [
@@ -102,9 +102,7 @@ function doPost(event) {
         selection.name,
         selection.stages.map(function (stage) { return stage.name; }).join(', '),
         selection.duration,
-        booking.packageType === 'single' && booking.interviewStage === 'technical'
-          ? booking.durationMinutes
-          : selection.includesTechnical ? booking.technicalDurationMinutes : '',
+        selection.includesTechnical ? STAGES.technical.duration : '',
         selection.price,
         safeCell_(booking.preferredDate),
         safeCell_(booking.preferredTime),
@@ -167,9 +165,10 @@ function resolvePackage_(booking) {
     const stage = STAGES[booking.interviewStage];
     if (!stage) throw new Error('Unknown interview stage.');
     const duration = Number(booking.durationMinutes);
-    const price = booking.interviewStage === 'technical'
-      ? stage.prices[duration]
-      : stage.duration === duration ? stage.price : null;
+    const supportedDurations = stage.durations || [stage.duration];
+    const price = supportedDurations.indexOf(duration) === -1
+      ? null
+      : stage.prices ? stage.prices[duration] : stage.price;
     if (!price) throw new Error('Stage duration or price is invalid.');
     return {
       name: stage.name,
@@ -185,9 +184,8 @@ function resolvePackage_(booking) {
     if (!bundle) throw new Error('Unknown package bundle.');
     const selectedStages = bundle.stages.map(function (stageId) { return STAGES[stageId]; });
     const includesTechnical = bundle.stages.indexOf('technical') !== -1;
-    const duration = selectedStages.reduce(function (total, stage, index) {
-      if (bundle.stages[index] === 'technical') return total + Number(booking.technicalDurationMinutes);
-      return total + stage.duration;
+    const duration = selectedStages.reduce(function (total, stage) {
+      return total + (stage.defaultDuration || stage.duration);
     }, 0);
     return {
       name: bundle.name,
@@ -234,10 +232,6 @@ function validateBooking_(booking) {
   if (booking.packageType === 'bundle' &&
       !Object.prototype.hasOwnProperty.call(BUNDLES, booking.bundleId)) {
     throw new Error('Choose a package bundle.');
-  }
-  if (booking.packageType === 'bundle' && BUNDLES[booking.bundleId].stages.indexOf('technical') !== -1 &&
-      ![30, 45].includes(Number(booking.technicalDurationMinutes))) {
-    throw new Error('Choose a Technical Interview length for the bundle.');
   }
   if (booking.timezone !== 'Asia/Manila') {
     throw new Error('Unsupported timezone.');

@@ -5,7 +5,7 @@ A mobile-first booking-request website for one-on-one interview practice. Built 
 ## What’s included
 
 - Four interview stages and two multi-stage bundles. The selected package price appears after the visitor chooses a job category and package.
-- 15-, 30-, 45-, and Technical 30/45-minute options with their package prices configured in `src/config.ts`.
+- 15- and 30-minute Initial Screening options, a 30-minute Hiring Manager Interview, a Technical Interview of up to 45 minutes, and a 45-minute Final Interview, with prices configured in `src/config.ts`.
 - A live mock interview, performance feedback, written recap, and practical recommendations included with every package.
 - A guided booking request with validation, Back navigation, schedule summary, privacy notice, and explicit request-not-confirmation messaging.
 - An optional Google Apps Script endpoint that writes requests to a private Google Sheet. No credentials or spreadsheet IDs are stored in the website.
@@ -17,17 +17,17 @@ Job category is used to tailor practice questions and does not change the price.
 
 | Interview stage | Price | Duration |
 | --- | ---: | --- |
-| Initial Screening | ₱100 | 15 minutes |
-| Hiring Manager Interview | ₱150 | 30 minutes |
-| Technical Interview | ₱200 / ₱220 | 30 / 45 minutes |
+| Initial Screening | ₱100 | 15 or 30 minutes |
+| Hiring Manager Interview | ₱100 | 30 minutes |
+| Technical Interview | ₱200 | Up to 45 minutes |
 | Final Interview | ₱250 | 45 minutes |
 
 | Bundle | Included stages | Price |
 | --- | --- | ---: |
-| Corporate Track | Initial Screening + Hiring Manager Interview | ₱220 (save ₱30) |
-| Executive Track | All four stages | ₱500 (save ₱200 with the 30-minute Technical option) |
+| Corporate Track | Initial Screening + Hiring Manager Interview | ₱200 |
+| Executive Track | All four stages | ₱500 (save ₱150 when purchased individually) |
 
-Executive Track can use a 30- or 45-minute Technical Interview. Its bundle price remains ₱500; the displayed savings are calculated against the selected stage durations. Booking summaries show the full session time across all included stages. Prices are displayed only after the visitor selects a job category and a stage or bundle. Update the frontend configuration and matching package validation in `google-apps-script/Code.gs` together if pricing changes.
+The Technical Interview is priced at ₱200 and scheduled as a 45-minute block (up to 45 minutes). Executive Track uses that same maximum duration; its ₱500 price saves ₱150 compared with buying all four stages individually. Corporate Track uses the 30-minute Initial Screening default and is priced at the combined cost of its individual stages. Booking summaries show the full scheduled time across all included stages. Prices are displayed only after the visitor selects a job category and a stage or bundle. Update the frontend configuration and matching package validation in `google-apps-script/Code.gs` together if pricing changes.
 
 ## Run locally
 

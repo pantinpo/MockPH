@@ -29,7 +29,6 @@ const initialBooking: Booking = {
   interviewStage: '',
   bundleId: '',
   durationMinutes: 0,
-  technicalDurationMinutes: 30,
   preferredDate: '',
   preferredTime: '',
   timezone: 'Asia/Manila',
@@ -50,6 +49,7 @@ function PackageSelector({
   idPrefix: string
 }) {
   const packagePrice = getPackagePrice(booking)
+  const bundleSavings = booking.bundleId ? getBundleSavings(booking.bundleId) : 0
   const hasSelection = Boolean(
     booking.jobCategory &&
     ((booking.packageType === 'single' && booking.interviewStage) ||
@@ -71,13 +71,8 @@ function PackageSelector({
     onChange('bundleId', bundleId)
   }
 
-  function chooseTechnicalDuration(duration: 30 | 45) {
-    if (booking.packageType === 'single') onChange('durationMinutes', duration)
-    else onChange('technicalDurationMinutes', duration)
-  }
-
   const selectedBundle = businessConfig.bundles.find((bundle) => bundle.id === booking.bundleId)
-  const includesTechnical = selectedBundle?.id === 'executive'
+  const selectedStage = businessConfig.stages.find((stage) => stage.id === booking.interviewStage)
 
   return (
     <div className="package-selector">
@@ -151,7 +146,7 @@ function PackageSelector({
                 />
                 <span className="stage-option-top">
                   <b><span className="stage-index">0{index + 1}</span> {stage.name}</b>
-                  <span>{stage.durations.join(' or ')} min</span>
+                  <span>{getStageDurationLabel(stage)}</span>
                 </span>
                 <small>{stage.description}</small>
               </label>
@@ -179,7 +174,11 @@ function PackageSelector({
                   <small>{bundle.description}</small>
                   <small>{bundle.stages.map((stageId) => {
                     const stage = businessConfig.stages.find((item) => item.id === stageId)
-                    return `${stage?.name}: ${stage?.durations.join(' or ')} min`
+                    if (!stage) return ''
+                    const durationLabel = stage.id === 'technical'
+                      ? getStageDurationLabel(stage)
+                      : `${stage.defaultDuration} min`
+                    return `${stage.name}: ${durationLabel}`
                   }).join(' · ')}</small>
                 </span>
                 <span className="bundle-check" aria-hidden="true">{booking.bundleId === bundle.id ? '✓' : '+'}</span>
@@ -190,42 +189,24 @@ function PackageSelector({
         </fieldset>
       )}
 
-      {booking.packageType === 'single' && booking.interviewStage === 'technical' && (
+      {booking.packageType === 'single' && selectedStage && selectedStage.durations.length > 1 && (
         <fieldset className="duration-picker">
-          <legend>Choose your Technical Interview length</legend>
+          <legend>Choose your {selectedStage.name} length</legend>
           <div className="duration-options">
-            {([30, 45] as const).map((duration) => (
+            {selectedStage.durations.map((duration) => (
               <label className={`duration-option ${booking.durationMinutes === duration ? 'selected' : ''}`} key={duration}>
                 <input
                   type="radio"
-                  name={`${idPrefix}-technicalDuration`}
+                  name={`${idPrefix}-stageDuration`}
+                  value={duration}
                   checked={booking.durationMinutes === duration}
-                  onChange={() => chooseTechnicalDuration(duration)}
+                  onChange={() => onChange('durationMinutes', duration)}
                 />
                 <b>{duration} minutes</b>
               </label>
             ))}
           </div>
-        </fieldset>
-      )}
-
-      {booking.packageType === 'bundle' && includesTechnical && (
-        <fieldset className="duration-picker">
-          <legend>Technical Interview length in this bundle</legend>
-          <div className="duration-options">
-            {([30, 45] as const).map((duration) => (
-              <label className={`duration-option ${booking.technicalDurationMinutes === duration ? 'selected' : ''}`} key={duration}>
-                <input
-                  type="radio"
-                  name={`${idPrefix}-bundleTechnicalDuration`}
-                  checked={booking.technicalDurationMinutes === duration}
-                  onChange={() => chooseTechnicalDuration(duration)}
-                />
-                <b>{duration} minutes</b>
-              </label>
-            ))}
-          </div>
-          <span className="field-hint">The bundle price stays the same for either length.</span>
+          {errors.durationMinutes && <span className="field-error">{errors.durationMinutes}</span>}
         </fieldset>
       )}
 
@@ -237,8 +218,8 @@ function PackageSelector({
               <b>{formatPrice(packagePrice)}</b>
               <small>{getPackageName(booking)} · {getPackageDurationMinutes(booking)} minutes total</small>
             </div>
-            {booking.packageType === 'bundle' && selectedBundle && (
-              <span className="savings-note">Save {formatPrice(getBundleSavings(selectedBundle.id, booking.technicalDurationMinutes))}</span>
+            {booking.packageType === 'bundle' && selectedBundle && bundleSavings > 0 && (
+              <span className="savings-note">Save {formatPrice(bundleSavings)}</span>
             )}
           </>
         ) : (
@@ -248,6 +229,12 @@ function PackageSelector({
       <p className="included-line"><span>✓</span> Every package includes a live mock interview, feedback, written recap, and recommendations.</p>
     </div>
   )
+}
+
+function getStageDurationLabel(stage: (typeof businessConfig.stages)[number]) {
+  return stage.id === 'technical'
+    ? `Up to ${stage.defaultDuration} min`
+    : `${stage.durations.join(' or ')} min`
 }
 
 const experienceOptions = [
@@ -266,7 +253,8 @@ function todayInManila() {
 }
 
 function getManilaWeekday(date: string) {
-  return new Date(`${date}T12:00:00+08:00`).getUTCDay()
+  const [year, month, day] = date.split('-').map(Number)
+  return new Date(Date.UTC(year, month - 1, day)).getUTCDay()
 }
 
 function isClosedDate(date: string) {
@@ -274,11 +262,51 @@ function isClosedDate(date: string) {
   return weekday === 0 || weekday === 6
 }
 
+function formatDateKey(year: number, month: number, day: number) {
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+}
+
+function shiftCalendarMonth(monthKey: string, offset: number) {
+  const [year, month] = monthKey.split('-').map(Number)
+  const shifted = new Date(Date.UTC(year, month - 1 + offset, 1))
+  return formatDateKey(shifted.getUTCFullYear(), shifted.getUTCMonth() + 1, 1).slice(0, 7)
+}
+
+function formatCalendarMonth(monthKey: string) {
+  const [year, month] = monthKey.split('-').map(Number)
+  return new Intl.DateTimeFormat('en-PH', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(year, month - 1, 1)))
+}
+
 function latestStartTime(date: string, durationMinutes: number) {
   const weekday = date ? getManilaWeekday(date) : -1
   const closingMinutes = weekday === 5 ? 18 * 60 : 22 * 60
   const latestMinutes = Math.floor((closingMinutes - durationMinutes) / 30) * 30
   return `${String(Math.floor(latestMinutes / 60)).padStart(2, '0')}:${String(latestMinutes % 60).padStart(2, '0')}`
+}
+
+function getAvailableTimeSlots(date: string, durationMinutes: number) {
+  if (!date || isClosedDate(date)) return []
+
+  const [latestHour, latestMinute] = latestStartTime(date, durationMinutes).split(':').map(Number)
+  const latestMinutes = latestHour * 60 + latestMinute
+  const slots: { value: string; label: string }[] = []
+
+  for (let minutes = 10 * 60; minutes <= latestMinutes; minutes += 30) {
+    const hour = Math.floor(minutes / 60)
+    const minute = minutes % 60
+    const displayHour = hour % 12 || 12
+    const period = hour < 12 ? 'AM' : 'PM'
+    slots.push({
+      value: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
+      label: `${displayHour}:${String(minute).padStart(2, '0')} ${period}`,
+    })
+  }
+
+  return slots
 }
 
 function Field({
@@ -304,6 +332,84 @@ function Field({
   )
 }
 
+function DatePicker({
+  value,
+  today,
+  onChange,
+  ariaInvalid,
+  ariaDescribedBy,
+}: {
+  value: string
+  today: string
+  onChange: (date: string) => void
+  ariaInvalid: boolean
+  ariaDescribedBy?: string
+}) {
+  const [visibleMonth, setVisibleMonth] = useState(() => (value || today).slice(0, 7))
+  const [year, month] = visibleMonth.split('-').map(Number)
+  const firstDayOffset = (new Date(Date.UTC(year, month - 1, 1)).getUTCDay() + 6) % 7
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate()
+  const cellCount = Math.ceil((firstDayOffset + daysInMonth) / 7) * 7
+  const calendarDays = Array.from({ length: cellCount }, (_, index) => {
+    const day = index - firstDayOffset + 1
+    return day > 0 && day <= daysInMonth ? formatDateKey(year, month, day) : ''
+  })
+  const currentMonth = today.slice(0, 7)
+
+  return (
+    <div
+      className="date-picker"
+      role="group"
+      aria-labelledby="preferredDate-label"
+      aria-describedby={ariaDescribedBy}
+      aria-invalid={ariaInvalid}
+    >
+      <div className="calendar-header">
+        <button
+          className="calendar-nav"
+          type="button"
+          aria-label="Previous month"
+          disabled={visibleMonth <= currentMonth}
+          onClick={() => setVisibleMonth((current) => shiftCalendarMonth(current, -1))}
+        >
+          ‹
+        </button>
+        <b>{formatCalendarMonth(visibleMonth)}</b>
+        <button
+          className="calendar-nav"
+          type="button"
+          aria-label="Next month"
+          onClick={() => setVisibleMonth((current) => shiftCalendarMonth(current, 1))}
+        >
+          ›
+        </button>
+      </div>
+      <div className="calendar-grid" aria-label="Choose a weekday">
+        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((weekday) => (
+          <span className="calendar-weekday" key={weekday}>{weekday}</span>
+        ))}
+        {calendarDays.map((date, index) => {
+          if (!date) return <span className="calendar-empty" key={`empty-${index}`} aria-hidden="true" />
+          const disabled = date < today || isClosedDate(date)
+          return (
+            <button
+              className={`calendar-day ${value === date ? 'selected' : ''}`}
+              type="button"
+              key={date}
+              disabled={disabled}
+              aria-label={date}
+              aria-pressed={value === date}
+              onClick={() => onChange(date)}
+            >
+              {Number(date.slice(-2))}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const [step, setStep] = useState(0)
   const [booking, setBooking] = useState<Booking>(initialBooking)
@@ -319,6 +425,8 @@ function App() {
   const packageName = getPackageName(booking)
   const packageDuration = getPackageDurationMinutes(booking)
   const packageStages = getPackageStageNames(booking)
+  const today = todayInManila()
+  const availableTimeSlots = getAvailableTimeSlots(booking.preferredDate, packageDuration)
 
   function updateField<Key extends keyof Booking>(key: Key, value: Booking[Key]) {
     setBooking((current) => ({ ...current, [key]: value }))
@@ -326,7 +434,7 @@ function App() {
       ...current,
       [key]: undefined,
       ...(key === 'jobCategory' || key === 'packageType' || key === 'interviewStage' ||
-        key === 'bundleId' || key === 'durationMinutes' || key === 'technicalDurationMinutes'
+        key === 'bundleId' || key === 'durationMinutes'
         ? { packageType: undefined, interviewStage: undefined, bundleId: undefined, durationMinutes: undefined }
         : {}),
     }))
@@ -353,10 +461,13 @@ function App() {
   }
 
   function continueWithSelectedPackage() {
+    const selectedStage = businessConfig.stages.find((stage) => stage.id === booking.interviewStage)
     const selectionComplete = price !== null &&
       Boolean(packageName) &&
       packageDuration > 0 &&
-      (booking.interviewStage !== 'technical' || getStagePrice('technical', booking.durationMinutes) !== null)
+      (booking.packageType !== 'single' ||
+        !selectedStage ||
+        getStagePrice(selectedStage.id, booking.durationMinutes) !== null)
     setStep(selectionComplete ? 1 : 0)
     setErrors({})
     setSubmitError('')
@@ -379,8 +490,10 @@ function App() {
       if (booking.packageType === 'bundle' && !booking.bundleId) {
         nextErrors.bundleId = 'Choose a bundle to continue.'
       }
-      if (booking.interviewStage === 'technical' && !getStagePrice('technical', booking.durationMinutes)) {
-        nextErrors.durationMinutes = 'Choose a Technical Interview length.'
+      const selectedStage = businessConfig.stages.find((stage) => stage.id === booking.interviewStage)
+      if (booking.packageType === 'single' && selectedStage &&
+          getStagePrice(selectedStage.id, booking.durationMinutes) === null) {
+        nextErrors.durationMinutes = `Choose a valid ${selectedStage.name} length.`
       }
     }
     if (step === 1) {
@@ -395,7 +508,7 @@ function App() {
     }
     if (step === 2) {
       if (!booking.preferredDate) nextErrors.preferredDate = 'Choose a preferred date.'
-      else if (booking.preferredDate < todayInManila()) {
+      else if (booking.preferredDate < today) {
         nextErrors.preferredDate = 'Choose today or a future date.'
       } else if (isClosedDate(booking.preferredDate)) {
         nextErrors.preferredDate = 'Bookings are available Monday to Friday. Saturday and Sunday are closed.'
@@ -669,11 +782,31 @@ function App() {
                     <div className="wizard-content">
                       <div className="wizard-title"><span className="step-kicker">03 / SCHEDULE</span><h2>When works for you?</h2><p>Choose a weekday and a time during our open hours. All times are Philippine time.</p></div>
                       <div className="field-grid">
-                        <Field id="preferredDate" label="Preferred date" error={errors.preferredDate}>
-                          <input id="preferredDate" type="date" min={todayInManila()} value={booking.preferredDate} onChange={(event) => choosePreferredDate(event.target.value)} aria-invalid={Boolean(errors.preferredDate)} aria-describedby={errors.preferredDate ? 'preferredDate-error' : undefined} />
-                        </Field>
+                        <div className="field">
+                          <span className="field-label" id="preferredDate-label">Preferred date</span>
+                          <DatePicker
+                            value={booking.preferredDate}
+                            today={today}
+                            onChange={choosePreferredDate}
+                            ariaInvalid={Boolean(errors.preferredDate)}
+                            ariaDescribedBy={errors.preferredDate ? 'preferredDate-error' : undefined}
+                          />
+                          {errors.preferredDate && <span className="field-error" id="preferredDate-error">{errors.preferredDate}</span>}
+                        </div>
                         <Field id="preferredTime" label="Preferred time" error={errors.preferredTime} hint="Choose times on the hour or half-hour. Mon–Thu: 10:00 AM–10:00 PM · Fri: 10:00 AM–6:00 PM · Closed weekends. Your session must end by closing.">
-                          <input id="preferredTime" type="time" min="10:00" max={latestStartTime(booking.preferredDate, packageDuration)} step={1800} value={booking.preferredTime} onChange={(event) => updateField('preferredTime', event.target.value)} aria-invalid={Boolean(errors.preferredTime)} aria-describedby={errors.preferredTime ? 'preferredTime-error' : undefined} />
+                          <select
+                            id="preferredTime"
+                            value={booking.preferredTime}
+                            onChange={(event) => updateField('preferredTime', event.target.value)}
+                            disabled={!availableTimeSlots.length}
+                            aria-invalid={Boolean(errors.preferredTime)}
+                            aria-describedby={errors.preferredTime ? 'preferredTime-error' : undefined}
+                          >
+                            <option value="">{booking.preferredDate ? 'Choose a time' : 'Choose a weekday first'}</option>
+                            {availableTimeSlots.map((slot) => (
+                              <option key={slot.value} value={slot.value}>{slot.label}</option>
+                            ))}
+                          </select>
                         </Field>
                       </div>
                       <Field id="notes" label="Anything else we should know? (optional)" hint="For example, an interview format or a question you find tricky.">

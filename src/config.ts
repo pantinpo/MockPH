@@ -20,8 +20,8 @@ export const businessConfig = {
     {
       id: 'screening',
       name: 'Initial Screening',
-      durations: [15],
-      defaultDuration: 15,
+      durations: [15, 30],
+      defaultDuration: 30,
       price: 100,
       description: 'Elevator pitch, resume walkthrough, and core culture-fit questions.',
     },
@@ -30,15 +30,15 @@ export const businessConfig = {
       name: 'Hiring Manager Interview',
       durations: [30],
       defaultDuration: 30,
-      price: 150,
+      price: 100,
       description: 'Project deep dives, behavioral competencies, and STAR-method practice.',
     },
     {
       id: 'technical',
       name: 'Technical Interview',
-      durations: [30, 45],
-      defaultDuration: 30,
-      priceByDuration: { 30: 200, 45: 220 },
+      durations: [45],
+      defaultDuration: 45,
+      price: 200,
       description: 'Role-specific problem-solving, scenarios, and structured critique.',
     },
     {
@@ -55,7 +55,7 @@ export const businessConfig = {
       id: 'corporate',
       name: 'Corporate Track',
       stages: ['screening', 'hiringManager'],
-      price: 220,
+      price: 200,
       description: 'Initial Screening + Hiring Manager Interview',
     },
     {
@@ -86,7 +86,6 @@ export interface Booking {
   interviewStage: InterviewStage | ''
   bundleId: InterviewBundle | ''
   durationMinutes: number
-  technicalDurationMinutes: 30 | 45
   preferredDate: string
   preferredTime: string
   timezone: 'Asia/Manila'
@@ -105,9 +104,6 @@ export type BookingSubmission = Booking & {
 export function getStagePrice(stageId: InterviewStage, durationMinutes: number) {
   const stage = businessConfig.stages.find((item) => item.id === stageId)
   if (!stage || !stage.durations.some((duration) => duration === durationMinutes)) return null
-  if ('priceByDuration' in stage) {
-    return stage.priceByDuration[durationMinutes as keyof typeof stage.priceByDuration] ?? null
-  }
   return stage.price
 }
 
@@ -121,15 +117,13 @@ export function getPackagePrice(booking: Pick<Booking, 'packageType' | 'intervie
   return null
 }
 
-export function getPackageDurationMinutes(booking: Pick<Booking, 'packageType' | 'interviewStage' | 'bundleId' | 'durationMinutes' | 'technicalDurationMinutes'>) {
+export function getPackageDurationMinutes(booking: Pick<Booking, 'packageType' | 'interviewStage' | 'bundleId' | 'durationMinutes'>) {
   if (booking.packageType === 'single') return booking.durationMinutes
   if (booking.packageType !== 'bundle' || !booking.bundleId) return 0
   const bundle = businessConfig.bundles.find((item) => item.id === booking.bundleId)
   if (!bundle) return 0
   return bundle.stages.reduce((total, stageId) => {
-    return total + (stageId === 'technical'
-      ? booking.technicalDurationMinutes
-      : businessConfig.stages.find((stage) => stage.id === stageId)?.defaultDuration ?? 0)
+    return total + (businessConfig.stages.find((stage) => stage.id === stageId)?.defaultDuration ?? 0)
   }, 0)
 }
 
@@ -143,14 +137,13 @@ export function getPackageName(booking: Pick<Booking, 'packageType' | 'interview
   return ''
 }
 
-export function getBundleSavings(bundleId: InterviewBundle, technicalDurationMinutes: 30 | 45) {
+export function getBundleSavings(bundleId: InterviewBundle) {
   const bundle = businessConfig.bundles.find((item) => item.id === bundleId)
   if (!bundle) return 0
   const individualPrice = bundle.stages.reduce((total, stageId) => {
     const stage = businessConfig.stages.find((item) => item.id === stageId)
     if (!stage) return total
-    const duration = stageId === 'technical' ? technicalDurationMinutes : stage.defaultDuration
-    return total + (getStagePrice(stageId, duration) ?? 0)
+    return total + (getStagePrice(stageId, stage.defaultDuration) ?? 0)
   }, 0)
   return individualPrice - bundle.price
 }
