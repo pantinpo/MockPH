@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node -e \"const fs=require('fs');const path=require('path');const html=fs.readFileSync('dist/index.html','utf8');for(const route of ['ai','ai/login','ai/dashboard','ai/interview/new','ai/history','ai/pricing','ai/account','ai/support']){const dir=path.join('dist',route);fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'index.html'),html)}\"",
     "lint": "oxlint",
     "preview": "vite preview",
     "android:add": "npx cap add android",
