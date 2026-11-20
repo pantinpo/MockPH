@@ -365,6 +365,22 @@ h1, h2, h3, p { margin-top: 0; }
 }
 
 /* Pricing is revealed only after the visitor selects a category and package. */
+.ai-entry-card {
+  margin-top: 22px;
+  max-width: 520px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 16px;
+  border: 1px solid #dfe6dc;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .72);
+}
+.ai-entry-card b { display: block; font-size: 14px; }
+.ai-entry-card p { margin: 4px 0 0; color: #71807a; font-size: 12px; line-height: 1.5; }
+.button-ai { flex: 0 0 auto; background: var(--teal); color: #fff; min-height: 42px; text-decoration: none; }
+.button-ai:hover { background: var(--teal-dark); }
 .trust-inner span { font-size: 17px; gap: 13px; }
 .trust-inner i { font-size: 15px; font-weight: 700; }
 .art-price b { font-size: 13px; }

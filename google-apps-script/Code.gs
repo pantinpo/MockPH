@@ -52,6 +52,7 @@ const HEADERS = [
 function doPost(event) {
   let success = false;
   let responseToken = '';
+  let failureCode = 'INVALID_REQUEST';
   try {
     const rawPayload = event && event.parameter && event.parameter.payload;
     if (!rawPayload || rawPayload.length > 12000) {
@@ -67,13 +68,16 @@ function doPost(event) {
 
     const selection = resolvePackage_(booking);
     validateSchedule_(booking, selection.duration);
+    failureCode = 'PACKAGE_MISMATCH';
     if (Number(booking.packagePrice) !== selection.price ||
         Number(booking.durationMinutes) !== selection.duration ||
         Number(booking.packageDurationMinutes) !== selection.duration) {
       throw new Error('Package price or duration did not match the configured selection.');
     }
+    failureCode = 'VERIFICATION_FAILED';
     validateTurnstile_(booking.turnstileToken);
 
+    failureCode = 'SHEET_WRITE_FAILED';
     const lock = LockService.getScriptLock();
     lock.waitLock(10000);
     try {
@@ -116,9 +120,12 @@ function doPost(event) {
     }
     success = true;
   } catch (error) {
-    console.error(error && error.message ? error.message : 'Booking request could not be saved.');
+    console.error(
+      '[' + (responseToken || 'unknown-request') + '] ' +
+      (error && error.message ? error.message : 'Booking request could not be saved.'),
+    );
   }
-  return response_(success, responseToken);
+  return response_(success, responseToken, success ? '' : failureCode);
 }
 
 function validateTurnstile_(token) {
@@ -280,8 +287,13 @@ function safeCell_(value) {
   return /^[=+\-@]/.test(text) ? "'" + text : text;
 }
 
-function response_(ok, responseToken) {
-  const message = JSON.stringify({ type: RESULT_TYPE, ok: ok, responseToken: responseToken })
+function response_(ok, responseToken, errorCode) {
+  const message = JSON.stringify({
+    type: RESULT_TYPE,
+    ok: ok,
+    responseToken: responseToken,
+    errorCode: errorCode,
+  })
     .replace(/</g, '\\u003c');
   return HtmlService.createHtmlOutput(
     '<!doctype html><meta charset="utf-8"><script>window.top.postMessage(' +

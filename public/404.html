@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MockCall PH</title>
+  </head>
+  <body>
+    <script>
+      if (window.location.pathname === '/ai' || window.location.pathname.startsWith('/ai/')) {
+        window.location.replace('/?ai-route=' + encodeURIComponent(window.location.pathname));
+      } else {
+        window.location.replace('/');
+      }
+    </script>
+  </body>
+</html>

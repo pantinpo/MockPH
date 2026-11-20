@@ -72,9 +72,39 @@ Booking requests are sent only to a Google Apps Script web app. The spreadsheet 
 
 If you already deployed the earlier version of this Apps Script, update the script and deploy a new version. The HTML response must post the result to `window.top` with the request's `responseToken`; otherwise the site cannot receive confirmation through Apps Script's sandboxed iframe. The booking columns now include package type, included stages, total duration, and the selected technical duration. Preserve any existing booking rows; if the current tab has the older columns, back it up and configure `SHEET_NAME` to use a new tab before accepting new requests.
 
+After changing `google-apps-script/Code.gs`, update the deployed web app: in Apps Script, open **Deploy → Manage deployments**, edit the web app deployment, select **New version**, and deploy. The website and Apps Script are deployed separately. A `Package price or duration did not match the configured selection` error means the running site and Apps Script disagree about the selected package's price or duration. Deploy the current `Code.gs` as a new web app version and rebuild/redeploy the site from the same revision; confirm both `src/config.ts` and `Code.gs` use matching package prices and durations. Verification failures may require checking the Turnstile hostname and script properties; sheet-write failures require checking the Apps Script execution log and the `SPREADSHEET_ID` property. The site intentionally does not display raw server errors.
+
 The endpoint URL is public and anonymous submission can attract spam. The script validates values, requires successful Turnstile Siteverify validation, uses a honeypot, and prevents spreadsheet formula injection. Turnstile tokens are single-use and expire after five minutes. Keep Apps Script access, Sheet sharing, and account security restricted. If a key has been shared in chat or committed, rotate it in Cloudflare and update the Apps Script property.
 
 If the endpoint is absent or misconfigured, the site does **not** show a success state. It does not silently store requests in the browser or send them to a placeholder contact.
+
+## MockCall AI `/ai` foundation
+
+The existing human-interview website remains unchanged at `/`. The MockCall AI implementation is additive and mounted by `src/main.tsx` for `/ai` and `/ai/*` paths.
+
+The frontend foundation includes:
+
+- AI landing page and existing-site CTA.
+- Authentication preview for Google, LinkedIn, and phone number.
+- Dashboard and minute-balance presentation.
+- Interview setup, pricing, history, and support views.
+- 3-tier rating and AI-disclaimer copy.
+- Typed minutes-ledger and interview domain models.
+
+The independent API foundation is in `services/ai-api/`:
+
+```sh
+cd services/ai-api
+npm install
+npm run migrate
+npm run dev
+```
+
+Set `DATABASE_URL` and the provider variables documented in `services/ai-api/.env.example`. Never put Gemini, OAuth, OTP, payment, or JWT secrets in Vite variables or repository files.
+
+The PostgreSQL migration creates the AI users, authentication-provider, minutes ledger, interview, transcript, assessment, consent, payment, support, OTP, webhook, and audit tables. It does not modify or read the existing human-booking Google Sheet.
+
+Production provider implementation remains required for OAuth callbacks, OTP delivery, Gemini Live voice sessions, server-side session metering, payment webhooks, assessment workers, and Android Google Play Billing. Those integrations must use the independent API secrets and must not be simulated in the static frontend.
 
 ## Owner setup before launch
 

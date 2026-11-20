@@ -1,0 +1,41 @@
+.ai-app { --ai-ink:#17352f; --ai-teal:#24675c; --ai-paper:#f7f8f2; min-height:100vh; background:var(--ai-paper); color:var(--ai-ink); }
+.ai-header { height:76px; padding:0 max(24px,calc((100% - 1180px)/2)); display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #dde3da; }
+.ai-brand,.ai-brand-mark,.ai-header nav,.ai-actions,.ai-type-grid,.ai-page-heading,.ai-footer { display:flex; align-items:center; }
+.ai-brand { gap:10px; text-decoration:none; font-size:18px; }
+.ai-brand-mark { width:38px;height:38px;border-radius:50%;justify-content:center;background:var(--ai-teal);color:#fff;font-weight:800; }
+.ai-header nav { gap:22px; }
+.ai-header nav button,.ai-recent button { border:0;background:none;color:var(--ai-ink);cursor:pointer; }
+.ai-header-action { border:1px solid var(--ai-teal);border-radius:999px;padding:10px 18px;background:transparent;color:var(--ai-teal);cursor:pointer; }
+.ai-hero { max-width:1180px;min-height:520px;margin:auto;padding:72px 24px;display:grid;grid-template-columns:1.15fr .85fr;gap:70px;align-items:center; }
+.ai-eyebrow { color:#cf754f;font-size:12px;font-weight:800;letter-spacing:.16em; }
+.ai-hero h1,.ai-page h1 { margin:16px 0;font-family:Georgia,serif;font-size:58px;line-height:1.04;letter-spacing:-2px;font-weight:600; }
+.ai-hero p { max-width:590px;font-size:18px;line-height:1.7;color:#66766f; }
+.ai-actions { display:flex;gap:12px;margin:28px 0 14px; }
+.ai-primary,.ai-secondary,.ai-provider { min-height:48px;border-radius:10px;padding:12px 18px;cursor:pointer;font-weight:700; }
+.ai-primary { border:0;background:var(--ai-teal);color:#fff; }
+.ai-secondary { border:1px solid #ccd6cd;background:#fff;color:var(--ai-ink); }
+.ai-hero-card { min-height:390px;border-radius:28px;background:#dfeadf;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;box-shadow:0 24px 60px rgba(39,58,49,.12); }
+.ai-live { position:absolute;top:24px;left:24px;font-size:11px;letter-spacing:.12em; }
+.ai-live i { display:inline-block;width:8px;height:8px;border-radius:50%;background:#d66f48;margin-right:7px; }
+.ai-orb { width:148px;height:148px;border-radius:50%;background:var(--ai-teal);color:#fff;display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:800;box-shadow:0 0 0 18px rgba(36,103,92,.08); }
+.ai-wave { display:flex;gap:5px;height:30px;margin-top:18px;align-items:center; }
+.ai-wave i { display:block;width:4px;height:16px;border-radius:4px;background:#8bab9f; }.ai-wave i:nth-child(3),.ai-wave i:nth-child(5){height:26px}
+.ai-section,.ai-retention,.ai-page { max-width:1180px;margin:auto;padding:70px 24px; }
+.ai-section h2,.ai-retention h2 { font-family:Georgia,serif;font-size:38px; }
+.ai-type-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:14px; }
+.ai-type-grid button { text-align:left;border:1px solid #dde3da;border-radius:16px;padding:22px;background:#fff;cursor:pointer;min-height:210px; }
+.ai-type-grid button>span { color:#cf754f;font-size:12px; }.ai-type-grid b { display:block;margin-top:38px;font-size:18px; }.ai-type-grid p { color:#69766f;line-height:1.55; }
+.ai-retention { border-top:1px solid #dde3da; }.ai-retention p { max-width:680px;line-height:1.7;color:#69766f; }
+.ai-modal-backdrop { position:fixed;inset:0;background:rgba(23,53,47,.42);display:grid;place-items:center;padding:20px;z-index:20; }
+.ai-modal { width:min(440px,100%);border-radius:20px;background:#fff;padding:34px;position:relative; }.ai-modal h2 { font-family:Georgia,serif;font-size:34px; }.ai-modal-close { position:absolute;right:18px;top:12px;border:0;background:none;font-size:28px;cursor:pointer; }
+.ai-provider { display:block;width:100%;margin:10px 0;border:1px solid #ccd6cd;background:#fff;color:var(--ai-ink); }.ai-modal p { color:#69766f;font-size:12px; }
+.ai-auth { min-height:700px;display:grid;place-items:center; }.ai-auth section { width:min(440px,100%); }.ai-auth h1 { font-size:44px; }
+.ai-page-heading { justify-content:space-between; }.ai-page h1 { font-size:48px; }
+.ai-dashboard-grid { display:grid;grid-template-columns:1fr 1fr;gap:16px; }.ai-dashboard-grid section,.ai-recent,.ai-pack-grid section { background:#fff;border:1px solid #dde3da;border-radius:18px;padding:24px; }
+.ai-balance span,.ai-card-label { font-size:11px;font-weight:800;letter-spacing:.12em;color:#69766f; }.ai-balance b { display:block;margin:18px 0 8px;font-size:36px; }.ai-recent { margin-top:16px; }.ai-recent>div { display:flex;justify-content:space-between;align-items:center; }
+.ai-setup form,.ai-page form { max-width:760px; }.ai-setup form label,.ai-page form label { display:block;margin:14px 0;font-weight:700; }.ai-setup select,.ai-setup input,.ai-page select,.ai-page input,.ai-page textarea { display:block;width:100%;margin-top:7px;padding:12px;border:1px solid #ccd6cd;border-radius:8px;background:#fff;color:var(--ai-ink); }
+.ai-billing-note { margin:14px 0;padding:14px;border-radius:10px;background:#edf3ec;line-height:1.55;color:#5d6c65; }
+.ai-pack-grid { display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin:28px 0; }.ai-pack-grid section { text-align:center; }.ai-pack-grid b { display:block;font-size:34px;margin:14px 0; }
+.ai-footer { height:76px;max-width:1180px;margin:auto;padding:0 24px;justify-content:space-between;border-top:1px solid #dde3da;color:#69766f;font-size:13px; }.ai-footer a { color:var(--ai-teal); }
+@media(max-width:800px){.ai-header nav{display:none}.ai-hero{grid-template-columns:1fr;padding-top:48px}.ai-hero h1{font-size:42px}.ai-hero-card{min-height:300px}.ai-type-grid,.ai-dashboard-grid,.ai-pack-grid{grid-template-columns:1fr 1fr}.ai-actions{flex-direction:column}.ai-actions button{width:100%}.ai-page-heading{align-items:flex-start;gap:16px}.ai-page h1{font-size:38px}.ai-footer{height:auto;padding-top:24px;padding-bottom:24px;gap:12px;flex-direction:column;align-items:flex-start}}
+@media(max-width:500px){.ai-header{padding:0 16px}.ai-header-action{padding:8px 12px}.ai-hero{padding:38px 16px}.ai-hero h1{font-size:36px}.ai-type-grid,.ai-dashboard-grid,.ai-pack-grid{grid-template-columns:1fr}.ai-page-heading{flex-direction:column}.ai-section,.ai-retention,.ai-page{padding:48px 16px}}

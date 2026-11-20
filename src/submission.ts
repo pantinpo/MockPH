@@ -2,6 +2,21 @@ import type { BookingSubmission } from './config'
 
 const resultMessageType = 'mockcall-booking-result'
 
+function getSubmissionError(errorCode: unknown) {
+  switch (errorCode) {
+    case 'INVALID_REQUEST':
+      return 'We could not verify the booking details. Check your package and preferred schedule, then try again.'
+    case 'PACKAGE_MISMATCH':
+      return 'The booking page and service have different package settings. Please contact the service operator to update the booking service, then try again.'
+    case 'VERIFICATION_FAILED':
+      return 'The security check could not be verified. Please complete it again and resend your request.'
+    case 'SHEET_WRITE_FAILED':
+      return 'The booking service could not save your request. Please try again later or contact the service operator.'
+    default:
+      return 'We could not save your request. Please try again later.'
+  }
+}
+
 export async function submitBookingRequest(booking: BookingSubmission, turnstileToken: string) {
   const endpoint = import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL?.trim()
   if (!endpoint) {
@@ -58,7 +73,7 @@ export async function submitBookingRequest(booking: BookingSubmission, turnstile
     const onMessage = (event: MessageEvent) => {
       if (event.data?.type !== resultMessageType || event.data.responseToken !== responseToken) return
       if (event.data.ok === true) finish()
-      else finish(new Error('We could not save your request. Please try again later.'))
+      else finish(new Error(getSubmissionError(event.data.errorCode)))
     }
     const timeoutId = window.setTimeout(() => {
       finish(new Error('The request could not be confirmed. Please try again later; if this keeps happening, contact the service operator.'))
