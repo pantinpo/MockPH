@@ -18,7 +18,7 @@ export default function AiApp() {
 
   function navigate(next: AiView) {
     setView(next)
-    window.history.pushState({}, '', next === 'landing' ? '/ai' : `/ai/${next}`)
+    window.history.pushState({}, '', next === 'landing' ? '#/' : `#/ai/${next}`)
   }
 
   function startTrial() {
@@ -51,6 +51,9 @@ export default function AiApp() {
           {view === 'landing' ? 'Sign in' : 'Dashboard'}
         </button>
       </header>
+      <div className="ai-preview-banner" role="status">
+        Internal preview: sign-in, interviews, minutes, and purchases are not connected yet.
+      </div>
 
       {view === 'landing' && (
         <main>
@@ -172,13 +175,13 @@ export default function AiApp() {
         <main className="ai-page"><span className="ai-eyebrow">SUPPORT</span><h1>How can we help?</h1><form onSubmit={(event) => event.preventDefault()}><label>Category<select><option>Technical issue</option><option>Billing and minutes</option><option>Account</option></select></label><label>Subject<input /></label><label>Description<textarea rows={5} /></label><button type="submit" className="ai-primary">Submit ticket</button></form></main>
       )}
 
-      <footer className="ai-footer"><a href="/">Back to human interview services</a><span>MockCall AI · Voice practice only</span></footer>
+      <footer className="ai-footer"><a href="https://mockph.com" target="_blank" rel="noopener noreferrer">Human interview services at mockph.com</a><span>MockCall AI · Voice practice only</span></footer>
     </div>
   )
 }
 
 function getView(): AiView {
-  const segment = window.location.pathname.split('/')[2]
+  const segment = window.location.hash.split('/')[2]
   const views: AiView[] = ['login', 'dashboard', 'setup', 'history', 'pricing', 'support']
   return views.includes(segment as AiView) ? segment as AiView : 'landing'
 }

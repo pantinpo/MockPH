@@ -625,13 +625,6 @@ function App() {
               </button>
               <a className="text-link" href="#how-it-works">How it works <span aria-hidden="true">↓</span></a>
             </div>
-            <div className="ai-entry-card">
-              <div>
-                <b>Want private practice first? Try AI.</b>
-                <p>Practice interviews privately, anytime, without the pressure of speaking to another person.</p>
-              </div>
-              <a className="button button-ai" href="/ai">Practice With AI <span aria-hidden="true">→</span></a>
-            </div>
             <div className="hero-reassurance"><span aria-hidden="true">✳</span> No pressure. No judgment. Just practice.</div>
           </div>
 

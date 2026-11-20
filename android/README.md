@@ -1,20 +1,28 @@
 # MockCall AI Android
 
-This folder is created by Capacitor. Run:
+This is the native Android project directory. The web companion is not the AI product; `ai-app/` is the Android app's packaged UI source.
 
 ```sh
 npm install
-npm run android:add
-npm run android:sync
+npm run android:build
 npm run android:open
 ```
 
-Android requires:
+Before a Google Play internal test:
 
-- `android.permission.RECORD_AUDIO`
-- Google Play Billing integration for AI minutes
-- A microphone permission explanation
-- The AI API base URL
-- No Gemini, OAuth, OTP, or payment secrets in the Android bundle
+- Install a supported JDK and Android SDK, then configure `ANDROID_HOME`.
+- Set up a Play Console app and application signing.
+- Add `android.permission.RECORD_AUDIO` with a clear permission explanation.
+- Integrate Google Play Billing for minute packages.
+- Configure real authentication and the AI API.
+- Upload a signed Android App Bundle (`.aab`) to the internal testing track.
 
-The existing `/ai` web routes should remain accessible inside the WebView. Authentication and all minutes accounting remain server-side.
+Authentication and minutes accounting must remain server-side. Do not put Gemini, OAuth, OTP, or payment secrets in the Android bundle.
+
+On Windows, build the release bundle from the project root after installing the Android toolchain:
+
+```powershell
+.\android\gradlew.bat -p android bundleRelease
+```
+
+The resulting bundle is written under `android\app\build\outputs\bundle\release\`.

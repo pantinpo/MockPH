@@ -6,6 +6,7 @@
 .ai-header nav { gap:22px; }
 .ai-header nav button,.ai-recent button { border:0;background:none;color:var(--ai-ink);cursor:pointer; }
 .ai-header-action { border:1px solid var(--ai-teal);border-radius:999px;padding:10px 18px;background:transparent;color:var(--ai-teal);cursor:pointer; }
+.ai-preview-banner { padding:10px 20px;text-align:center;background:#fff0e8;color:#794224;font-size:12px;font-weight:700; }
 .ai-hero { max-width:1180px;min-height:520px;margin:auto;padding:72px 24px;display:grid;grid-template-columns:1.15fr .85fr;gap:70px;align-items:center; }
 .ai-eyebrow { color:#cf754f;font-size:12px;font-weight:800;letter-spacing:.16em; }
 .ai-hero h1,.ai-page h1 { margin:16px 0;font-family:Georgia,serif;font-size:58px;line-height:1.04;letter-spacing:-2px;font-weight:600; }

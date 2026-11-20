@@ -78,18 +78,19 @@ The endpoint URL is public and anonymous submission can attract spam. The script
 
 If the endpoint is absent or misconfigured, the site does **not** show a success state. It does not silently store requests in the browser or send them to a placeholder contact.
 
-## MockCall AI `/ai` foundation
+## MockCall AI Android foundation
 
-The existing human-interview website remains unchanged at `/`. The MockCall AI implementation is additive and mounted by `src/main.tsx` for `/ai` and `/ai/*` paths.
+MockCall AI is a separate Android app; it is not served as an AI web route on the human-interview website. The existing website remains the human-interviewer booking experience at `/`.
 
-The frontend foundation includes:
+The Android UI source is in `ai-app/` and `src/AiApp.tsx`. Build and sync its packaged web assets into the native Capacitor project with:
 
-- AI landing page and existing-site CTA.
-- Authentication preview for Google, LinkedIn, and phone number.
-- Dashboard and minute-balance presentation.
-- Interview setup, pricing, history, and support views.
-- 3-tier rating and AI-disclaimer copy.
-- Typed minutes-ledger and interview domain models.
+```sh
+npm run android:build
+```
+
+This produces `dist-ai/` and copies it into `android/app`. Open the native project in Android Studio with `npm run android:open`. A local Android SDK and JDK are required to produce an APK or Android App Bundle.
+
+The current app is a UI prototype for internal evaluation. Sign-in, voice sessions, minutes, payments, and support submission are not connected to live services. This prototype must not be presented as a production service or submitted to public Play distribution.
 
 The independent API foundation is in `services/ai-api/`:
 
@@ -104,7 +105,7 @@ Set `DATABASE_URL` and the provider variables documented in `services/ai-api/.en
 
 The PostgreSQL migration creates the AI users, authentication-provider, minutes ledger, interview, transcript, assessment, consent, payment, support, OTP, webhook, and audit tables. It does not modify or read the existing human-booking Google Sheet.
 
-Production provider implementation remains required for OAuth callbacks, OTP delivery, Gemini Live voice sessions, server-side session metering, payment webhooks, assessment workers, and Android Google Play Billing. Those integrations must use the independent API secrets and must not be simulated in the static frontend.
+Production provider implementation remains required for OAuth callbacks, OTP delivery, Gemini Live voice sessions, server-side session metering, payment webhooks, assessment workers, and Google Play Billing. Those integrations must use the independent API secrets and must not be simulated in the app.
 
 ## Owner setup before launch
 
